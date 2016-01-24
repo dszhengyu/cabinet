@@ -2,11 +2,11 @@
 由于这不仅是一个编程项目    
 还是我个人的毕业设计    
 所以readme里面放着比较重要的东西
-包括且不限于:
-1. 当前任务及优先级    
-2. 项目当前进展情况    
+包括且不限于:    
+1. 当前任务及优先级        
+2. 项目当前进展情况        
 
-项目的需求及迭代步骤 请见 [需求文档](https://github.com/dszhengyu/cabinet/blob/master/%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3.md)
+项目的需求及迭代步骤 请见 [需求文档](https://github.com/dszhengyu/cabinet/blob/master/%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3.md)    
 项目的设计图 [请点我](https://www.processon.com/diagrams) (未分享)    
 
 

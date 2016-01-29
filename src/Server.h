@@ -8,6 +8,7 @@
 
 #include <string>
 #include <map>
+#include "Command.h"
 
 using std::string;
 using std::map;
@@ -15,7 +16,7 @@ using std::map;
 class Server
 {
 public :
-    //typedef map<string, Command *> commandmap_t;
+    typedef map<string, Command *> commandmap_t;
     Server();
     void initConfig();
     void init();
@@ -28,9 +29,9 @@ private:
     long serverId;
     int port;
     int listenFd;
+    commandmap_t *commandMap;
     //EventPoll *eventPoll;
     //DataBase *db;
-    //commandmap_t commandMap;
 };
 
 #endif

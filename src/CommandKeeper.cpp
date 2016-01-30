@@ -7,7 +7,7 @@ CommandKeeper::CommandKeeper() :
 }
 
 void CommandKeeper::createCommandMap() {
-    Log::notice("create command map\n");
+    Log::notice("create command map");
     commandMap = new map<string, Command*>; 
     (*commandMap)["get"] = new GetCommand();
 }

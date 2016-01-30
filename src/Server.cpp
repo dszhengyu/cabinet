@@ -2,6 +2,7 @@
 
 Server::Server() :
     serverId(-1),
+    clientIdMax(0),
     port(-1),
     listenFd(-1),
     commandKeeperPtr(NULL)
@@ -15,7 +16,12 @@ void Server::initConfig() {
 }
 
 void Server::init() {
-    //commandKeeperPtr = make_shared<CommandKeeper>(new CommandKeeper());
     commandKeeperPtr = new CommandKeeper();
     commandKeeperPtr->createCommandMap();
+}
+
+Client *Server::createClient() {
+    Client * client = new Client(clientIdMax, commandKeeperPtr);
+    ++clientIdMax;
+    return client;
 }

@@ -1,5 +1,5 @@
-CABINET_SERVER_NAME=cainet-server
-CABINET_SERVER_OBJECT=cabinet-server.o Server.o Log.o GetCommand.o CommandKeeper.o
+CABINET_SERVER_NAME=cabinet-server
+CABINET_SERVER_OBJECT=cabinet-server.o Server.o Log.o GetCommand.o CommandKeeper.o Client.o Util.o
 CABINET_COMMON_HEADER=Command.h Const.h
 CXXFLAGS= -std=c++11 -Wall -fPIC 
 CXX=g++

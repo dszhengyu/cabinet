@@ -6,21 +6,17 @@
 #define CABINET_PORT 8080
 /*****************************************************************************/
 
-#include <string>
-#include <map>
-#include "Command.h"
-
-using std::string;
-using std::map;
+#include "CommandKeeper.h"
+#include <memory>
+using std::shared_ptr;
+using std::make_shared;
 
 class Server
 {
 public :
-    typedef map<string, Command *> commandmap_t;
     Server();
     void initConfig();
     void init();
-    void createCommandMap();
     //Client *createClient(int connectFd);
     int getListenFd();
     int getConnectFd(int listenFd);
@@ -29,7 +25,8 @@ private:
     long serverId;
     int port;
     int listenFd;
-    commandmap_t *commandMap;
+    //shared_ptr<CommandKeeper> commandKeeperPtr;
+    CommandKeeper *commandKeeperPtr;
     //EventPoll *eventPoll;
     //DataBase *db;
 };

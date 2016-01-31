@@ -16,8 +16,9 @@ public :
     void initConfig();
     void init();
     Client *createClient();
-    int getListenFd();
-    int getConnectFd(int listenFd);
+    void listenOnPort();
+    int getConnectFd();
+    ~Server();
 
 private:
     long serverId;

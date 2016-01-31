@@ -6,14 +6,15 @@
 #include "CommandKeeper.h"
 
 using std::string;
+using std::stoi;
 using std::vector;
 
 class Client
 {
 public:
-    Client(long clientId, CommandKeeper *commandKeeperPtr);
-    int fillInputBuff(int connectFd);
-    int resolveInputBuff();
+    Client(long clientId, CommandKeeper *commandKeeperPtr, int fd);
+    int fillInputBuf();
+    int resolveInputBuf();
     int executeCommand();
     int sendReply();
     long getClientId() const {return this->clientId;}
@@ -27,6 +28,10 @@ private:
     int curArgvLen;
     int curArgc;
     CommandKeeper *commandKeeperPtr;
+    int fd;
+    const int READ_MAX_LEN = 1024 * 16;
+    int readyToExecute;
+    char commandType;
     //EventPoll *eventPoll;
 };
 #endif

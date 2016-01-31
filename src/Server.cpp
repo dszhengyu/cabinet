@@ -32,8 +32,8 @@ void Server::init() {
     this->listenOnPort();
 }
 
-Client *Server::createClient() {
-    Client * client = new Client(this->clientIdMax, commandKeeperPtr);
+Client *Server::createClient(int connectFd) {
+    Client * client = new Client(this->clientIdMax, commandKeeperPtr, connectFd);
     ++this->clientIdMax;
     Log::notice("create client, client_id[%d]", client->getClientId());
     return client;
@@ -85,6 +85,12 @@ int Server::getConnectFd() {
         if (errno != EWOULDBLOCK) {
             Log::warning("accept client connect error");
         }
+        return CABINET_ERR;
+    }
+
+    if (Util::setNonBlock(connectFd) == CABINET_ERR) {
+        Log::warning("set connect fd non-bolck error!");
+        close(connectFd);
         return CABINET_ERR;
     }
 

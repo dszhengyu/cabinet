@@ -15,7 +15,7 @@ public :
     Server();
     void initConfig();
     void init();
-    Client *createClient();
+    Client *createClient(int connectFd);
     void listenOnPort();
     int getConnectFd();
     ~Server();

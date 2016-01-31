@@ -5,7 +5,7 @@ int main ()
     Server server;
     server.initConfig();
     server.init();
-    server.createClient();
+    server.createClient(4);
 
     return 0;
 }

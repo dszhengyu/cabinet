@@ -12,15 +12,17 @@ class Client
 {
 public:
     Client(long clientId, CommandKeeper *commandKeeperPtr);
-    void readBuff();
-    void sendReply();
-    void resolveCommand();
+    int fillInputBuff(int connectFd);
+    int resolveInputBuff();
+    int executeCommand();
+    int sendReply();
+    long getClientId() const {return this->clientId;}
 
 private:
     long clientId;
     string inputBuf;
     string outputBuf;
-    int argc;
+    int argc;//argc三种状态: -1, 没有命令;0, 命令解析完成, 等待执行; >0, 命令还在解析中
     vector<string> argv;
     int curArgvLen;
     int curArgc;

@@ -1,4 +1,6 @@
 #include "Server.h"
+#include "Util.h"
+#include "Const.h"
 #include <cstring>
 #include <cstdlib>
 #include <sys/socket.h>
@@ -33,6 +35,7 @@ void Server::init() {
 Client *Server::createClient() {
     Client * client = new Client(this->clientIdMax, commandKeeperPtr);
     ++this->clientIdMax;
+    Log::notice("create client, client_id[%d]", client->getClientId());
     return client;
 }
 
@@ -59,9 +62,40 @@ void Server::listenOnPort() {
         Log::fatal("listen port error!");
         exit(1);
     }
+    
+    if (Util::setNonBlock(listenfd) == CABINET_ERR) {
+        Log::fatal("set listen fd non-bolck error!");
+        exit(1);
+    }
 
-    Log::notice("listen on port %d", this->port);
+    Log::notice("listening on port %d", this->port);
     this->listenFd = listenfd;
+}
+
+/* 
+ * brief: 获取客户端连接
+ *      成功返回描述符, 失败且不是因为非阻塞原因失败, 打印日志, 返回错误
+ */
+int Server::getConnectFd() {
+    //获取tcp/ipv4连接
+    struct sockaddr_in clientAddr;
+    socklen_t clientAddrLen = sizeof(clientAddr);
+    int connectFd;
+    if ((connectFd = accept(this->listenFd, (struct sockaddr *)&clientAddr, &clientAddrLen)) < 0) {
+        if (errno != EWOULDBLOCK) {
+            Log::warning("accept client connect error");
+        }
+        return CABINET_ERR;
+    }
+
+    //获取client连接信息
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &clientAddr.sin_addr, ip, INET_ADDRSTRLEN);
+    int port = ntohs(clientAddr.sin_port);
+
+    Log::notice("receive client connect, client_ip[%s], client_port[%d]", ip, port);
+
+    return connectFd;
 }
 
 Server::~Server() {

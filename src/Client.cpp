@@ -2,6 +2,9 @@
 #include "Const.h"
 #include <unistd.h>
 
+using std::stoi;
+using std::to_string;
+
 Client::Client(long clientId, CommandKeeper *commandKeeperPtr, int fd):
     clientId(clientId),
     inputBuf(),
@@ -9,10 +12,9 @@ Client::Client(long clientId, CommandKeeper *commandKeeperPtr, int fd):
     argc(-1),
     argv(),
     curArgvLen(-1),
-    curArgc(-1),
     commandKeeperPtr(commandKeeperPtr),
     fd(fd),
-    readyToExecute(0),
+    readyToExecute(false),
     commandType('\0')
 {
 
@@ -45,6 +47,23 @@ int Client::fillInputBuf() {
     return CABINET_OK;
 }
 
+int Client::isInputBufAvaliable() const {
+    if (this->inputBuf.length() != 0 &&
+            this->inputBuf.find_first_of('\n') != string::npos) {
+        return true;
+    }
+    return false;
+}
+
+int Client::resetBufForNextCommand() {
+    this->argc = -1;
+    this->commandType = '\0';
+    this->curArgvLen = -1;
+    this->argv.clear();
+    this->readyToExecute = false;
+    return CABINET_OK;
+}
+
 /* 
  * brief: 当输入缓冲区中有可解析的内容时调用
  *      解析客户端输入缓冲区的内容
@@ -61,7 +80,7 @@ int Client::fillInputBuf() {
  *
  */
 int Client::resolveInputBuf() {
-    if (this->inputBuf.length() == 0) {
+    if (!this->isInputBufAvaliable()) {
         return CABINET_OK;    
     }
 
@@ -72,16 +91,19 @@ int Client::resolveInputBuf() {
             return CABINET_ERR;
         }
 
-        size_t firstCR = this->inputBuf.find_first_of('\n', 1);
-        if (firstCR == string::npos) {
+        size_t firstLF = this->inputBuf.find_first_of('\n', 1);
+        if (firstLF == string::npos) {
             return CABINET_OK;    
         }
-        this->argc = stoi(string(this->inputBuf, 1, firstCR));
-        this->curArgc = 0;
-        this->inputBuf.erase(0, firstCR + 1);
-    }
-    if (this->inputBuf.length() == 0) {
-        return CABINET_OK;    
+        this->argc = stoi(string(this->inputBuf, 1, firstLF));
+        if (this->argc == 0) {
+            Log::warning("client client_id[%d] input format error, input_buf[%s]", this->getClientId(), this->inputBuf.c_str());
+            return CABINET_ERR;
+        }
+        this->inputBuf.erase(0, firstLF + 1);
+        if (!this->isInputBufAvaliable()) {
+            return CABINET_OK;    
+        }
     }
 
     if (this->commandType == '\0') {
@@ -91,24 +113,51 @@ int Client::resolveInputBuf() {
             return CABINET_ERR;
         }
 
-        size_t firstCR = this->inputBuf.find_first_of('\n', 1);
-        if (firstCR == string::npos) {
+        size_t firstLF = this->inputBuf.find_first_of('\n', 1);
+        if (firstLF == string::npos) {
             return CABINET_OK;    
         }
-        if (firstCR != 2) {
+        if (firstLF != 2) {
             Log::warning("client client_id[%d] input format error, input_buf[%s]", this->getClientId(), this->inputBuf.c_str());
             return CABINET_ERR;
         }
         this->commandType = this->inputBuf[1];
-        this->inputBuf.erase(0, firstCR + 1);
-    }
-    if (this->inputBuf.length() == 0) {
-        return CABINET_OK;    
+        this->inputBuf.erase(0, firstLF + 1);
+        if (!this->isInputBufAvaliable()) {
+            return CABINET_OK;    
+        }
     }
 
     //开始解析参数
-    //to-do
-
+    while (this->isInputBufAvaliable()) {
+        size_t firstLF = this->inputBuf.find_first_of('\n');
+        if (this->curArgvLen == -1) {
+            //当前参数长度未解析
+            if (this->inputBuf[0] != '$') {
+                Log::warning("client client_id[%d] input format error, input_buf[%s]", this->getClientId(), this->inputBuf.c_str());
+                return CABINET_ERR;
+            }
+            this->curArgvLen = stoi(string(this->inputBuf, 1, firstLF));
+            this->inputBuf.erase(0, firstLF + 1);
+            continue;
+        }
+        else {
+            //按照长度获取当前参数
+            if ((long)firstLF != this->curArgvLen) {
+                Log::warning("client client_id[%d] input format error, input_buf[%s]", this->getClientId(), this->inputBuf.c_str());
+                return CABINET_ERR;
+            }
+            this->argv.push_back(string(this->inputBuf, 0, firstLF));
+            this->curArgvLen = -1;
+            this->inputBuf.erase(0, firstLF + 1);
+            continue;
+            --this->argc;
+            if (this->argc == 0) {
+                this->readyToExecute = true;
+                break;
+            }
+        }
+    }
 
     return CABINET_OK;
 }
@@ -117,6 +166,32 @@ int Client::resolveInputBuf() {
  * brief: 当输入缓冲区中当前命令解析完毕时调用
  */
 int Client::executeCommand() {
+    if (this->argv.size() == 0) {
+        Log::warning("client client_id[%d] executing the command but argv is empty!", this->getClientId());
+        return CABINET_ERR;
+    }
+    const string &commandName = this->argv[0];
+    Command &selectedCommand = this->commandKeeperPtr->selectCommand(commandName);
+    if (selectedCommand(*this) == CABINET_ERR) {
+        Log::warning("client client_id[%d] execute command error", this->getClientId());
+        return CABINET_ERR;
+    }
 
+    return CABINET_OK;
+}
+
+int Client::initReplyHead(int argc) {
+    this->outputBuf.append("*");
+    this->outputBuf.append(to_string(argc));
+    this->outputBuf.append("\n");
+    return CABINET_OK;
+}
+
+int Client::appendReplyBody(const string &part) {
+    this->outputBuf.append("$");
+    this->outputBuf.append(to_string(part.length()));
+    this->outputBuf.append("\n");
+    this->outputBuf.append(part);
+    this->outputBuf.append("\n");
     return CABINET_OK;
 }

@@ -1,6 +1,6 @@
 #include "GetCommand.h"
 
-int GetCommand::operator()() const {
+int GetCommand::operator()(Client &client) const {
 
     return 0;
 }

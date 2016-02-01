@@ -181,6 +181,7 @@ int Client::executeCommand() {
 }
 
 int Client::initReplyHead(int argc) {
+    //to-do 在eventloop中安装可写事件
     this->outputBuf.append("*");
     this->outputBuf.append(to_string(argc));
     this->outputBuf.append("\n");
@@ -188,10 +189,38 @@ int Client::initReplyHead(int argc) {
 }
 
 int Client::appendReplyBody(const string &part) {
+    //to-do 在eventloop中安装可写事件
     this->outputBuf.append("$");
     this->outputBuf.append(to_string(part.length()));
     this->outputBuf.append("\n");
     this->outputBuf.append(part);
     this->outputBuf.append("\n");
+    return CABINET_OK;
+}
+
+/* 
+ * brief: 当输出缓冲区中有数据需要发送给客户时调用
+ * notice: 发送完成后, 需要删除eventloop中的可写轮询
+ */
+int Client::sendReply() {
+    if (this->outputBuf.length() == 0) {
+        return CABINET_OK;
+    }
+
+    int nWrite = this->outputBuf.length();
+    nWrite = write(this->fd, this->outputBuf.c_str(), nWrite);
+    if (nWrite == -1) {
+        if (errno == EWOULDBLOCK) {
+            return CABINET_OK;
+        }
+        else {
+            Log::warning("write data to client cliend_id[%d] error", this->getClientId());
+            return CABINET_ERR;
+        }
+    }
+    this->outputBuf.erase(0, nWrite);
+    if (this->outputBuf.length() == 0) {
+        //to-do delete file event loop for write
+    }
     return CABINET_OK;
 }

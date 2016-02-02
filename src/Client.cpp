@@ -5,17 +5,18 @@
 using std::stoi;
 using std::to_string;
 
-Client::Client(long clientId, CommandKeeper *commandKeeperPtr, int fd):
+Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll):
     clientId(clientId),
     inputBuf(),
     outputBuf(),
     argc(-1),
     argv(),
     curArgvLen(-1),
-    commandKeeperPtr(commandKeeperPtr),
+    commandKeeper(commandKeeper),
     fd(fd),
     readyToExecute(false),
-    commandType('\0')
+    commandType('\0'),
+    eventPoll(eventPoll)
 {
 
 }
@@ -171,17 +172,20 @@ int Client::executeCommand() {
         return CABINET_ERR;
     }
     const string &commandName = this->argv[0];
-    Command &selectedCommand = this->commandKeeperPtr->selectCommand(commandName);
+    Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
     if (selectedCommand(*this) == CABINET_ERR) {
         Log::warning("client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
     }
+    this->resetBufForNextCommand();
 
     return CABINET_OK;
 }
 
 int Client::initReplyHead(int argc) {
-    //to-do 在eventloop中安装可写事件
+    //在eventloop中安装可写事件
+    eventPoll->createFileEvent(this, WRITE_EVENT);
+
     this->outputBuf.append("*");
     this->outputBuf.append(to_string(argc));
     this->outputBuf.append("\n");
@@ -189,7 +193,9 @@ int Client::initReplyHead(int argc) {
 }
 
 int Client::appendReplyBody(const string &part) {
-    //to-do 在eventloop中安装可写事件
+    //在eventloop中安装可写事件
+    eventPoll->createFileEvent(this, WRITE_EVENT);
+
     this->outputBuf.append("$");
     this->outputBuf.append(to_string(part.length()));
     this->outputBuf.append("\n");
@@ -214,13 +220,17 @@ int Client::sendReply() {
             return CABINET_OK;
         }
         else {
-            Log::warning("write data to client cliend_id[%d] error", this->getClientId());
+            Log::warning("write data to client client_id[%d] error", this->getClientId());
             return CABINET_ERR;
         }
     }
     this->outputBuf.erase(0, nWrite);
     if (this->outputBuf.length() == 0) {
-        //to-do delete file event loop for write
+        //delete file event loop for write
+        if (eventPoll->deleteFileEvent(this, WRITE_EVENT) == CABINET_ERR) {
+            Log::warning("delete client client_id[%d] write file event error", this->getClientId());
+            return CABINET_ERR;
+        }
     }
     return CABINET_OK;
 }

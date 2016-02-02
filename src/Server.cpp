@@ -7,14 +7,14 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <time.h>
 
 Server::Server() :
     serverId(-1),
     clientIdMax(0),
     port(-1),
     listenFd(-1),
-    commandKeeperPtr(NULL)
+    commandKeeperPtr(nullptr),
+    eventPoll(nullptr)
 {
 
 } 
@@ -29,23 +29,33 @@ void Server::initConfig() {
 void Server::init() {
     this->commandKeeperPtr = new CommandKeeper();
     this->commandKeeperPtr->createCommandMap();
-    this->listenOnPort();
+
+    if (this->listenOnPort() == CABINET_ERR) {
+        Log::fatal("listen on port error");
+        exit(1);
+    }
+
+    this->eventPoll = new EventPoll(this);
+    if (this->eventPoll->initEventPoll() == CABINET_ERR) {
+        Log::fatal("create event poll error");
+        exit(1);
+    }
 }
 
 Client *Server::createClient(int connectFd) {
-    Client * client = new Client(this->clientIdMax, commandKeeperPtr, connectFd);
+    Client * client = new Client(this->clientIdMax, commandKeeperPtr, connectFd, eventPoll);
     ++this->clientIdMax;
     Log::notice("create client, client_id[%d]", client->getClientId());
     return client;
 }
 
-void Server::listenOnPort() {
+int Server::listenOnPort() {
     int listenfd;
     struct sockaddr_in serverAddr;
 
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         Log::fatal("create socket fail!");
-        exit(1);
+        return CABINET_ERR;
     }   
 
     bzero(&serverAddr, sizeof(serverAddr));
@@ -55,21 +65,22 @@ void Server::listenOnPort() {
 
     if (bind(listenfd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
         Log::fatal("bind error!");
-        exit(1);
+        return CABINET_ERR;
     }   
 
     if (listen(listenfd, 5)< 0) {
         Log::fatal("listen port error!");
-        exit(1);
+        return CABINET_ERR;
     }
     
     if (Util::setNonBlock(listenfd) == CABINET_ERR) {
         Log::fatal("set listen fd non-bolck error!");
-        exit(1);
+        return CABINET_ERR;
     }
 
     Log::notice("listening on port %d", this->port);
     this->listenFd = listenfd;
+    return CABINET_OK;
 }
 
 /* 

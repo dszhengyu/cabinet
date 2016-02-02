@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 #include "CommandKeeper.h"
+#include "EventPoll.h"
 class CommandKeeper;
+class EventPoll;
 
 using std::string;
 using std::vector;
@@ -12,7 +14,7 @@ using std::vector;
 class Client
 {
 public:
-    Client(long clientId, CommandKeeper *commandKeeperPtr, int fd);
+    Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll);
     int fillInputBuf();
     int resolveInputBuf();
     int executeCommand();
@@ -21,6 +23,7 @@ public:
     int initReplyHead(int argc);
     int appendReplyBody(const string &);
     int appendReplyBody(const char *);
+    int getClientFd() const {return this->fd;}
 
 private:
     int isInputBufAvaliable() const;
@@ -31,11 +34,11 @@ private:
     int argc;//argc三种状态: -1, 没有命令;0, 命令解析完成, 等待执行; >0, 命令还在解析中
     vector<string> argv;
     long curArgvLen;
-    CommandKeeper *commandKeeperPtr;
+    CommandKeeper *commandKeeper;
     int fd;
     const int READ_MAX_LEN = 1024 * 16;
     bool readyToExecute;
     char commandType;
-    //EventPoll *eventPoll;
+    EventPoll *eventPoll;
 };
 #endif

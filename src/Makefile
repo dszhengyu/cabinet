@@ -1,6 +1,6 @@
 CABINET_SERVER_NAME=cabinet-server
 CABINET_COMMAND_OBJECT=GetCommand.o NoMatchCommand.o
-CABINET_SERVER_OBJECT=cabinet-server.o Server.o Log.o CommandKeeper.o Client.o Util.o $(CABINET_COMMAND_OBJECT)
+CABINET_SERVER_OBJECT=cabinet-server.o Server.o Log.o CommandKeeper.o Client.o Util.o EventPoll.o $(CABINET_COMMAND_OBJECT)
 CABINET_COMMON_HEADER=Command.h Const.h
 CXXFLAGS= -std=c++11 -Wall -fPIC 
 CXX=g++

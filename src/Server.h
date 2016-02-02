@@ -8,6 +8,10 @@
 
 #include "CommandKeeper.h"
 #include "Client.h"
+#include "EventPoll.h"
+class CommandKeeper;
+class Client;
+class EventPoll;
 
 class Server
 {
@@ -16,7 +20,7 @@ public :
     void initConfig();
     void init();
     Client *createClient(int connectFd);
-    void listenOnPort();
+    int listenOnPort();
     int getConnectFd();
     ~Server();
 
@@ -26,7 +30,7 @@ private:
     int port;
     int listenFd;
     CommandKeeper *commandKeeperPtr;
-    //EventPoll *eventPoll;
+    EventPoll *eventPoll;
     //DataBase *db;
 };
 

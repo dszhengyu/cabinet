@@ -227,7 +227,7 @@ int Client::sendReply() {
     this->outputBuf.erase(0, nWrite);
     if (this->outputBuf.length() == 0) {
         //delete file event loop for write
-        if (eventPoll->deleteFileEvent(this, WRITE_EVENT) == CABINET_ERR) {
+        if (eventPoll->removeFileEvent(this, WRITE_EVENT) == CABINET_ERR) {
             Log::warning("delete client client_id[%d] write file event error", this->getClientId());
             return CABINET_ERR;
         }

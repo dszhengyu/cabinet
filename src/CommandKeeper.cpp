@@ -21,3 +21,10 @@ Command &CommandKeeper::selectCommand(const string &commandName) {
     }
     return *(commandMap[commandName]);
 }
+
+CommandKeeper::~CommandKeeper() {
+    for (auto &mapValue : this->commandMap) {
+        Command *deletingCommand = mapValue.second;
+        delete deletingCommand;
+    }
+}

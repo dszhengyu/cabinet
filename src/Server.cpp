@@ -40,6 +40,8 @@ void Server::init() {
         Log::fatal("create event poll error");
         exit(1);
     }
+
+    this->eventPoll->pollListenFd(this->getListenFd());
 }
 
 Client *Server::createClient(int connectFd) {
@@ -119,4 +121,6 @@ Server::~Server() {
     if (this->listenFd != -1) {
         close(this->listenFd);
     }
+    delete this->eventPoll;
+    delete this->commandKeeperPtr;
 }

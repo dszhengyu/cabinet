@@ -21,6 +21,7 @@ public :
     void init();
     Client *createClient(int connectFd);
     int listenOnPort();
+    int getListenFd() const {return this->listenFd;}
     int getConnectFd();
     ~Server();
 

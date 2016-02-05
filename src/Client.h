@@ -24,6 +24,7 @@ public:
     int appendReplyBody(const string &);
     int appendReplyBody(const char *);
     int getClientFd() const {return this->fd;}
+    bool isReadyToExecute() const {return this->readyToExecute;}
 
 private:
     int isInputBufAvaliable() const;

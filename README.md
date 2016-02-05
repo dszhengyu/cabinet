@@ -9,6 +9,12 @@
 项目的需求及迭代步骤 请见 [需求文档](https://github.com/dszhengyu/cabinet/blob/master/%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3.md)    
 项目的设计图 [请点我](https://www.processon.com/diagrams) (未分享)    
 
+###2016-2-5
+项目进展: stage 1 cabinet-cli代码,基本框架完成, 具体命令及数据库没有支持 cabinet-cli尚未开始
+当前任务及优先级
+P0 尽快完成cabinet-cli的设计及代码编写, 求简, 复用Client代码, 尽快与cabinet-server进行测试
+P0.5 完成cabinet-server的编写 
+P1 思考迭代二需要做什么
 
 ###2016-1-24 
 项目进展: stage 1 设计阶段    

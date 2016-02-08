@@ -17,6 +17,7 @@ public:
 #endif
     bool isCommandValid() const {return false;}
     int commandArgc() const {return 0;}
+    const char commandType() const {return 'r';}
 };
 
 #endif

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "ProtocolStream.h"
+#include "CommandKeeper.h"
 
 using std::string;
 using std::vector;
@@ -23,18 +24,22 @@ public:
     int sendClientInput();
     int receiveServerOutput();
     int displayServerOutput();
+    void printPrompt();
 
 private:
+    int resetAll();
     string serverIp;
     int serverPort;
     string clientInput;
-    string clientInputFormated;
+    vector<string> clientInputSplited;
     string serverOutputBuf;
     vector<string> serverOutput;
     int serverOutputArgc;
     int serverOutputArgvLen;
     bool outputReady;
     string prompt;
+    ProtocolStream protocolStream;
+    CommandKeeper *commandKeeperPtr;
 };
 
 #endif

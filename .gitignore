@@ -1,3 +1,4 @@
 src/*.o
 src/*.log
 src/cabinet-server
+src/cabinet-cli

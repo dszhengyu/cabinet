@@ -24,6 +24,8 @@ public:
     int displayServerOutput();
 
 private:
+    string serverIp;
+    int serverPort;
     string clientInput;
     string clientInputFormated;
     string serverOutputBuf;
@@ -31,8 +33,7 @@ private:
     int serverOutputArgc;
     int serverOutputArgvLen;
     bool outputReady;
-    string serverIp;
-    int serverPort;
+    string prompt;
 };
 
 #endif

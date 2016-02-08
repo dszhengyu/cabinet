@@ -1,16 +1,22 @@
 #ifndef NOMATCHCOMMAND_H
 #define NOMATCHCOMMAND_H
 
-#include "Command.h"
-#include "Client.h"
+#ifdef CABINET_SERVER
+    #include "Client.h"
+    class Client;
+#endif
 
-class Client;
+#include "Command.h"
 class Command;
 
 class NoMatchCommand: public Command
 {
 public:
+#ifdef CABINET_SERVER
     int operator()(Client &client) const;
+#endif
+    bool isCommandValid() const {return false;}
+    int commandArgc() const {return 0;}
 };
 
 #endif

@@ -1,41 +1,43 @@
 #include "Log.h"
 #include "Util.h"
 #include <fstream>
-#include <cstdarg>
 #include <cstdio>
 
 using std::ofstream;
 
 void Log::fatal(const char *format, ...) {
-    char message[Log::BUF_MAX_SIZE];
     va_list args;
     va_start(args, format);
-    vsnprintf(message, Log::BUF_MAX_SIZE, format, args);
-    ofstream wLogFile(Log::wLogFileName, ofstream::app);
-    wLogFile << "Fatal @ " << Util::getCurrentTime() << message << '\n';
-    wLogFile.flush();
-    wLogFile.close();
+    Log::log(Log::wLogFileName, "Fatal @ ", format, args);
 }
 
 void Log::warning(const char *format, ...) {
-    char message[Log::BUF_MAX_SIZE];
     va_list args;
     va_start(args, format);
-    vsnprintf(message, Log::BUF_MAX_SIZE, format, args);
-    ofstream wLogFile(Log::wLogFileName, ofstream::app);
-    wLogFile << "Warning @ " << Util::getCurrentTime() << message << '\n';
-    wLogFile.flush();
-    wLogFile.close();
+    Log::log(Log::wLogFileName, "Warning @ ", format, args);
 }
 
 void Log::notice(const char *format, ...) {
-    char message[Log::BUF_MAX_SIZE];
     va_list args;
     va_start(args, format);
+    Log::log(Log::nLogFileName, "Notice @ ", format, args);
+}
+
+void Log::debug(const char *format, ...) {
+    if (!printDebug) {
+        return;
+    }   
+    va_list args;
+    va_start(args, format);
+    Log::log(Log::nLogFileName, "Debug @ ", format, args);
+}
+
+void Log::log(const char *logFileName, const char *logHeader, const char *format, va_list args) {
+    char message[Log::BUF_MAX_SIZE];
     vsnprintf(message, Log::BUF_MAX_SIZE, format, args);
-    ofstream nLogFile(Log::nLogFileName, ofstream::app);
-    nLogFile << "Notice @ " << Util::getCurrentTime() << message << '\n';
-    nLogFile.flush();
-    nLogFile.close();
+    ofstream logFile(logFileName, ofstream::app);
+    logFile << logHeader << Util::getCurrentTime() << message << '\n';
+    logFile.flush();
+    logFile.close();
 }
 

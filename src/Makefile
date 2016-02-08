@@ -6,30 +6,38 @@ CABINET_CLIENT_NAME=cabinet-cli
 #Common Dependency
 CABINET_COMMAND_OBJECT=GetCommand.o NoMatchCommand.o
 CABINET_COMMON_HEADER=Command.h Const.h
+CABINET_COMMON_OBJECT=Log.o Util.o ProtocolStream.o $(CABINET_COMMAND_OBJECT)
 
 #Target Dependency
-CABINET_SERVER_OBJECT=cabinet-server.o Server.o Log.o CommandKeeper.o Client.o Util.o EventPoll.o $(CABINET_COMMAND_OBJECT)
-CABINET_CLIENT_OBJECT=cabinet-cli.o CabinetCli.o
+CABINET_SERVER_OBJECT=cabinet-server.o Server.o Client.o CommandKeeper.o EventPoll.o $(CABINET_COMMON_OBJECT)
+CABINET_CLIENT_OBJECT=cabinet-cli.o CabinetCli.o $(CABINET_COMMON_OBJECT)
 
 #Compile Arguements
-CXXFLAGS= -std=c++11 -Wall -fPIC 
+CABINET_SERVER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_SERVER
+CABINET_CLIENT_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_CLIENT
 CXX=g++
 
 .PHONY: all
-all: $(CABINET_FINAL_TARGET)
+all:
+	$(MAKE) $(CABINET_SERVER_NAME) CXXFLAGS="$(CABINET_SERVER_CXXFLAGS)"
+	$(MAKE) $(CABINET_CLIENT_NAME) CXXFLAGS="$(CABINET_CLIENT_CXXFLAGS)"
 
 $(CABINET_SERVER_NAME): $(CABINET_SERVER_OBJECT)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
+	@-rm -f *.o
 
 $(CABINET_CLIENT_NAME): $(CABINET_CLIENT_OBJECT)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
+	@-rm -f *.o
 
 %.o: %.cpp %.h $(CABINET_COMMON_HEADER)
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 .PHONY: clean cleanlog
 clean:
-	-rm -f $(CABINET_SERVER_NAME) $(CABINET_SERVER_OBJECT) \
-		$(CABINET_CLIENT_NAME) $(CABINET_CLIENT__OBJECT)
+	-rm -f $(CABINET_SERVER_NAME) \
+		$(CABINET_SERVER_OBJECT) \
+		$(CABINET_CLIENT_NAME) \
+		$(CABINET_CLIENT_OBJECT)
 cleanlog:
 	-rm -rf *.log

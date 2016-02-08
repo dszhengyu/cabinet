@@ -24,20 +24,17 @@ all:
 
 $(CABINET_SERVER_NAME): $(CABINET_SERVER_OBJECT)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
-	@-rm -f *.o
+	@-rm -f $(CABINET_COMMAND_OBJECT)
 
 $(CABINET_CLIENT_NAME): $(CABINET_CLIENT_OBJECT)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
-	@-rm -f *.o
+	@-rm -f $(CABINET_COMMAND_OBJECT)
 
 %.o: %.cpp %.h $(CABINET_COMMON_HEADER)
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 .PHONY: clean cleanlog
 clean:
-	-rm -f $(CABINET_SERVER_NAME) \
-		$(CABINET_SERVER_OBJECT) \
-		$(CABINET_CLIENT_NAME) \
-		$(CABINET_CLIENT_OBJECT)
+	-rm -f $(CABINET_FINAL_TARGET) *.o
 cleanlog:
 	-rm -rf *.log

@@ -1,6 +1,8 @@
 #include "ProtocolStream.h"
 #include "Const.h"
 #include "Log.h"
+using std::stoi;
+using std::to_string;
 
 ProtocolStream::ProtocolStream(bool hasCommandType):
     hasCommandType(hasCommandType)
@@ -16,12 +18,12 @@ int ProtocolStream::resetBufForNextCommand() {
     return CABINET_OK;
 }
 
-int ProtocolStream::fillInputBuf(const char *str, int strLen) {
+int ProtocolStream::fillReceiveBuf(const char *str, int strLen) {
     this->inputBuf.append(str, strLen);
     return CABINET_OK;    
 }
 
-bool ProtocolStream::isInputBufAvaliable() const {
+bool ProtocolStream::isReceiveBufAvaliable() const {
     if (this->inputBuf.length() != 0 &&
             this->inputBuf.find_first_of('\n') != string::npos) {
         return true;
@@ -44,8 +46,8 @@ bool ProtocolStream::isInputBufAvaliable() const {
  * warning: 时刻注意, 缓冲区中不一定包含足够的内容, 内容不足时, 不破坏状态
  *
  */
-int ProtocolStream::resolveInputBuf() {
-    if (!this->isInputBufAvaliable()) {
+int ProtocolStream::resolveReceiveBuf() {
+    if (!this->isReceiveBufAvaliable()) {
         return CABINET_OK;    
     }
 
@@ -66,7 +68,7 @@ int ProtocolStream::resolveInputBuf() {
             return CABINET_ERR;
         }
         this->inputBuf.erase(0, firstLF + 1);
-        if (!this->isInputBufAvaliable()) {
+        if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
         }
     }
@@ -88,13 +90,13 @@ int ProtocolStream::resolveInputBuf() {
         }
         this->commandType = this->inputBuf[1];
         this->inputBuf.erase(0, firstLF + 1);
-        if (!this->isInputBufAvaliable()) {
+        if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
         }
     }
 
     //开始解析参数
-    while (this->isInputBufAvaliable()) {
+    while (this->isReceiveBufAvaliable()) {
         size_t firstLF = this->inputBuf.find_first_of('\n');
         if (this->curArgvLen == -1) {
             //当前参数长度未解析
@@ -126,4 +128,28 @@ int ProtocolStream::resolveInputBuf() {
 
     return CABINET_OK;
 }
+
+int ProtocolStream::initReplyHead(int argc) {
+    this->outputBuf.push_back('*');
+    this->outputBuf.append(to_string(argc));
+    this->outputBuf.push_back('\n');
+    return CABINET_OK;
+}
+
+int ProtocolStream::appendCommandType(const char commandType) {
+    this->outputBuf.push_back('#');
+    this->outputBuf.push_back(commandType);
+    this->outputBuf.push_back('\n');
+    return CABINET_OK;
+}
+
+int ProtocolStream::appendReplyBody(const string &part) {
+    this->outputBuf.push_back('$');
+    this->outputBuf.append(to_string(part.length()));
+    this->outputBuf.push_back('\n');
+    this->outputBuf.append(part);
+    this->outputBuf.push_back('\n');
+    return CABINET_OK;
+}
+
 

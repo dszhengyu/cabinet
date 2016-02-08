@@ -2,12 +2,9 @@
 #include "Const.h"
 #include <unistd.h>
 
-using std::stoi;
-using std::to_string;
 
 Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll):
     clientId(clientId),
-    outputBuf(),
     commandKeeper(commandKeeper),
     fd(fd),
     eventPoll(eventPoll),
@@ -21,7 +18,7 @@ Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *e
  *      将接收到的内容放入输入缓冲区
  * notice: 用户段关闭或者读取异常时, 返回错误, 调用者需要删除该客户端
  */
-int Client::fillInputBuf() {
+int Client::fillReceiveBuf() {
     char readBuf[this->READ_MAX_LEN];
     int nRead = 0;
     nRead = read(this->fd, readBuf, this->READ_MAX_LEN);
@@ -39,13 +36,13 @@ int Client::fillInputBuf() {
         return CABINET_ERR;
     }
 
-    return this->protocolStream.fillInputBuf(readBuf, nRead);
+    return this->protocolStream.fillReceiveBuf(readBuf, nRead);
 }
 
-int Client::resolveInputBuf() {
-    if (this->protocolStream.resolveInputBuf() == CABINET_ERR) {
+int Client::resolveReceiveBuf() {
+    if (this->protocolStream.resolveReceiveBuf() == CABINET_ERR) {
         Log::warning("client client_id[%d] input format error, input_buf[%s]", 
-                this->getClientId(), this->protocolStream.getInputBuf());
+                this->getClientId(), this->protocolStream.getReceiveBuf());
         return CABINET_ERR;
     }
     return CABINET_OK;
@@ -70,9 +67,7 @@ int Client::initReplyHead(int argc) {
     //在eventloop中安装可写事件
     eventPoll->createFileEvent(this, WRITE_EVENT);
 
-    this->outputBuf.append("*");
-    this->outputBuf.append(to_string(argc));
-    this->outputBuf.append("\n");
+    this->protocolStream.initReplyHead(argc);
     return CABINET_OK;
 }
 
@@ -80,11 +75,7 @@ int Client::appendReplyBody(const string &part) {
     //在eventloop中安装可写事件
     eventPoll->createFileEvent(this, WRITE_EVENT);
 
-    this->outputBuf.append("$");
-    this->outputBuf.append(to_string(part.length()));
-    this->outputBuf.append("\n");
-    this->outputBuf.append(part);
-    this->outputBuf.append("\n");
+    this->protocolStream.appendReplyBody(part);
     return CABINET_OK;
 }
 
@@ -93,12 +84,13 @@ int Client::appendReplyBody(const string &part) {
  * notice: 发送完成后, 需要删除eventloop中的可写轮询
  */
 int Client::sendReply() {
-    if (this->outputBuf.length() == 0) {
+    if (this->protocolStream.getSendBufLen() == 0) {
         return CABINET_OK;
     }
 
-    int nWrite = this->outputBuf.length();
-    nWrite = write(this->fd, this->outputBuf.c_str(), nWrite);
+    int nWrite = this->protocolStream.getSendBufLen();
+    const string &outputBuf = this->protocolStream.getSendBuf();
+    nWrite = write(this->fd, outputBuf.c_str(), nWrite);
     if (nWrite == -1) {
         if (errno == EWOULDBLOCK) {
             return CABINET_OK;
@@ -108,8 +100,8 @@ int Client::sendReply() {
             return CABINET_ERR;
         }
     }
-    this->outputBuf.erase(0, nWrite);
-    if (this->outputBuf.length() == 0) {
+    this->protocolStream.eraseSendBuf(0, nWrite);
+    if (this->protocolStream.getSendBufLen() == 0) {
         //delete file event loop for write
         if (eventPoll->removeFileEvent(this, WRITE_EVENT) == CABINET_ERR) {
             Log::warning("delete client client_id[%d] write file event error", this->getClientId());

@@ -17,8 +17,8 @@ class Client
 public:
     Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll);
     long getClientId() const {return this->clientId;}
-    int fillInputBuf();
-    int resolveInputBuf();
+    int fillReceiveBuf();
+    int resolveReceiveBuf();
     int executeCommand();
     int sendReply();
     int initReplyHead(int argc);
@@ -29,7 +29,6 @@ public:
 
 private:
     long clientId;
-    string outputBuf;
     CommandKeeper *commandKeeper;
     int fd;
     EventPoll *eventPoll;

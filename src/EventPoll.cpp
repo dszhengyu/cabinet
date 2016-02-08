@@ -128,13 +128,13 @@ int EventPoll::processEvent() {
                     continue;
                 }
                 Client *processingClient = readFileEventMap[eventFd];
-                if (processingClient->fillInputBuf() == CABINET_ERR) {
+                if (processingClient->fillReceiveBuf() == CABINET_ERR) {
                     Log::warning("client client_id[%d] fill input buf error, close it", processingClient->getClientId());
                     this->deleteClient(processingClient);
                     continue;
                 }
 
-                if (processingClient->resolveInputBuf() == CABINET_ERR) {
+                if (processingClient->resolveReceiveBuf() == CABINET_ERR) {
                     Log::warning("client client_id[%d] resolve input buf error, close it", processingClient->getClientId());
                     this->deleteClient(processingClient);
                     continue;

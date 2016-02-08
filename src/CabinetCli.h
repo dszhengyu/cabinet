@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include "ProtocolStream.h"
 
 using std::string;
 using std::vector;

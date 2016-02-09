@@ -140,7 +140,7 @@ int EventPoll::processEvent() {
                     continue;
                 }
 
-                if (processingClient->isReadyToExecute() == true) {
+                if (processingClient->isReceiveComplete() == true) {
                     if (processingClient->executeCommand() == CABINET_ERR) {
                         Log::warning("client client_id[%d] execute command error, close it", processingClient->getClientId());
                         this->deleteClient(processingClient);

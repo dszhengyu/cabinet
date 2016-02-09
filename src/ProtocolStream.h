@@ -14,9 +14,10 @@ public:
     int fillReceiveBuf(const char *str, int strLen);
     int resolveReceiveBuf();
     const char * getReceiveBuf() const {return this->inputBuf.c_str();}
-    bool isReadyToExecute() const {return this->readyToExecute;}
-    const string&getCommandName() const {return this->argv[0];}
-    int resetBufForNextCommand();
+    bool isReceiveComplete() const {return this->receiveComplete;}
+    const string &getCommandName() const {return this->argv[0];}
+    const vector<string> &getReceiveArgv() const {return this->argv;}
+    int clear();
     //output section
     int initReplyHead(int argc);
     int appendReplyBody(const string &);
@@ -32,7 +33,7 @@ private:
     int argc;//argc三种状态: -1, 没有命令;0, 命令解析完成, 等待执行; >0, 命令还在解析中
     vector<string> argv;
     long curArgvLen;
-    bool readyToExecute;
+    bool receiveComplete;
     char commandType;
     string outputBuf;
     

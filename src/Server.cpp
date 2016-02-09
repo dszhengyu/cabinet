@@ -117,6 +117,10 @@ int Server::getConnectFd() {
     return connectFd;
 }
 
+void Server::onFire() const {
+    this->eventPoll->processEvent();
+}
+
 Server::~Server() {
     if (this->listenFd != -1) {
         close(this->listenFd);

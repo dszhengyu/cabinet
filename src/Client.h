@@ -25,7 +25,7 @@ public:
     int appendReplyBody(const string &);
     int appendReplyBody(const char *);
     int getClientFd() const {return this->fd;}
-    bool isReadyToExecute() const {return this->protocolStream.isReadyToExecute();}
+    bool isReceiveComplete() const {return this->protocolStream.isReceiveComplete();}
 
 private:
     long clientId;

@@ -58,7 +58,7 @@ int Client::executeCommand() {
         Log::warning("client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
     }
-    this->protocolStream.resetBufForNextCommand();
+    this->protocolStream.clear();
 
     return CABINET_OK;
 }

@@ -23,6 +23,7 @@ public :
     int listenOnPort();
     int getListenFd() const {return this->listenFd;}
     int getConnectFd();
+    void onFire() const;
     ~Server();
 
 private:

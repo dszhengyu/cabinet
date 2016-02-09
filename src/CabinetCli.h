@@ -20,11 +20,11 @@ public:
     CabinetCli(const char *serverIp, int serverPort);
     int readClientInput();
     int formatClientInput();
-    int checkClientInput();
     int sendClientInput();
     int receiveServerOutput();
     int displayServerOutput();
     void printPrompt();
+    int connectServer();
 
 private:
     int resetAll();
@@ -40,6 +40,8 @@ private:
     string prompt;
     ProtocolStream protocolStream;
     CommandKeeper *commandKeeperPtr;
+    const int READ_MAX_LEN = 1024 * 16;
+    int connectFd;
 };
 
 #endif

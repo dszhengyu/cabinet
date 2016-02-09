@@ -9,12 +9,12 @@ ProtocolStream::ProtocolStream(bool hasCommandType):
 {
 }
 
-int ProtocolStream::resetBufForNextCommand() {
+int ProtocolStream::clear() {
     this->argc = -1;
     this->commandType = '\0';
     this->curArgvLen = -1;
     this->argv.clear();
-    this->readyToExecute = false;
+    this->receiveComplete = false;
     return CABINET_OK;
 }
 
@@ -120,7 +120,7 @@ int ProtocolStream::resolveReceiveBuf() {
             continue;
             --this->argc;
             if (this->argc == 0) {
-                this->readyToExecute = true;
+                this->receiveComplete = true;
                 break;
             }
         }

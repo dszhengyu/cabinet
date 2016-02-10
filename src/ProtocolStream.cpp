@@ -5,7 +5,14 @@ using std::stoi;
 using std::to_string;
 
 ProtocolStream::ProtocolStream(bool hasCommandType):
-    hasCommandType(hasCommandType)
+    hasCommandType(hasCommandType),
+    inputBuf(),
+    argc(-1),
+    argv(),
+    curArgvLen(-1),
+    receiveComplete(false),
+    commandType('\0'),
+    outputBuf()
 {
 }
 
@@ -52,9 +59,10 @@ int ProtocolStream::resolveReceiveBuf() {
     }
 
     if (this->argc == -1) {
+        logDebug("searching for *");
         //开始解析新请求
         if (this->inputBuf[0] != '*') {
-            Log::warning("protocol stream input format error, input_buf[%s]", this->inputBuf.c_str());
+            logWarning("protocol stream input format error, missing *, input_buf[%s]", this->inputBuf.c_str());
             return CABINET_ERR;
         }
 
@@ -64,19 +72,21 @@ int ProtocolStream::resolveReceiveBuf() {
         }
         this->argc = stoi(string(this->inputBuf, 1, firstLF));
         if (this->argc <= 0) {
-            Log::warning("protocol stream input format error, input_buf[%s]", this->inputBuf.c_str());
+            logWarning("protocol stream input format error, argc <= 0, input_buf[%s]", this->inputBuf.c_str());
             return CABINET_ERR;
         }
         this->inputBuf.erase(0, firstLF + 1);
         if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
         }
+        logDebug("argc get. argc[%d]", this->argc);
     }
 
     if (this->hasCommandType && this->commandType == '\0') {
+        logDebug("searching for #");
         //开始解析请求属性
         if (this->inputBuf[0] != '#') {
-            Log::warning("protocol stream input format error, input_buf[%s]", this->inputBuf.c_str());
+            logWarning("protocol stream input format error, missing #(command type), input_buf[%s]", this->inputBuf.c_str());
             return CABINET_ERR;
         }
 
@@ -85,7 +95,7 @@ int ProtocolStream::resolveReceiveBuf() {
             return CABINET_OK;    
         }
         if (firstLF != 2) {
-            Log::warning("protocol stream input format error, input_buf[%s]", this->inputBuf.c_str());
+            logWarning("protocol stream input format error, command type format error, input_buf[%s]", this->inputBuf.c_str());
             return CABINET_ERR;
         }
         this->commandType = this->inputBuf[1];
@@ -93,36 +103,41 @@ int ProtocolStream::resolveReceiveBuf() {
         if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
         }
+        logDebug("command type get command type[%c]", this->commandType);
     }
 
     //开始解析参数
     while (this->isReceiveBufAvaliable()) {
         size_t firstLF = this->inputBuf.find_first_of('\n');
         if (this->curArgvLen == -1) {
+            logDebug("searching for argv len");
             //当前参数长度未解析
             if (this->inputBuf[0] != '$') {
-                Log::warning("protocol stream input format error, input_buf[%s]", this->inputBuf.c_str());
+                logWarning("protocol stream input format error, missing $, input_buf[%s]", this->inputBuf.c_str());
                 return CABINET_ERR;
             }
             this->curArgvLen = stoi(string(this->inputBuf, 1, firstLF));
             this->inputBuf.erase(0, firstLF + 1);
+            logDebug("argv len get, argv_len[%d]", this->curArgvLen);
             continue;
         }
         else {
             //按照长度获取当前参数
+            logDebug("searching for argv");
             if ((long)firstLF != this->curArgvLen) {
-                Log::warning("protocol stream input format error, input_buf[%s]", this->inputBuf.c_str());
+                logWarning("protocol stream input format error, missing argv, input_buf[%s]", this->inputBuf.c_str());
                 return CABINET_ERR;
             }
             this->argv.push_back(string(this->inputBuf, 0, firstLF));
             this->curArgvLen = -1;
             this->inputBuf.erase(0, firstLF + 1);
-            continue;
+            logDebug("argv get, argv[%s]", (this->argv.end() - 1)->c_str());
             --this->argc;
             if (this->argc == 0) {
                 this->receiveComplete = true;
                 break;
             }
+            continue;
         }
     }
 

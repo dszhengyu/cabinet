@@ -8,8 +8,14 @@ CommandKeeper::CommandKeeper() :
 
 }
 
-void CommandKeeper::createCommandMap() {
-    Log::notice("create command map");
+void CommandKeeper::createServerCommandMap() {
+    logNotice("create server command map");
+    commandMap["get"] = new GetCommand();
+    commandMap["nomatch"] = new NoMatchCommand();
+}
+
+void CommandKeeper::createClientCommandMap() {
+    logNotice("create client command map");
     commandMap["get"] = new GetCommand();
     commandMap["nomatch"] = new NoMatchCommand();
 }

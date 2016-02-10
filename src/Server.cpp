@@ -28,16 +28,16 @@ void Server::initConfig() {
 
 void Server::init() {
     this->commandKeeperPtr = new CommandKeeper();
-    this->commandKeeperPtr->createCommandMap();
+    this->commandKeeperPtr->createServerCommandMap();
 
     if (this->listenOnPort() == CABINET_ERR) {
-        Log::fatal("listen on port error");
+        logFatal("listen on port error");
         exit(1);
     }
 
     this->eventPoll = new EventPoll(this);
     if (this->eventPoll->initEventPoll() == CABINET_ERR) {
-        Log::fatal("create event poll error");
+        logFatal("create event poll error");
         exit(1);
     }
 
@@ -47,7 +47,7 @@ void Server::init() {
 Client *Server::createClient(int connectFd) {
     Client * client = new Client(this->clientIdMax, commandKeeperPtr, connectFd, eventPoll);
     ++this->clientIdMax;
-    Log::notice("create client, client_id[%d]", client->getClientId());
+    logNotice("create client, client_id[%d]", client->getClientId());
     return client;
 }
 
@@ -56,7 +56,7 @@ int Server::listenOnPort() {
     struct sockaddr_in serverAddr;
 
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        Log::fatal("create socket fail!");
+        logFatal("create socket fail!");
         return CABINET_ERR;
     }   
 
@@ -66,21 +66,21 @@ int Server::listenOnPort() {
     serverAddr.sin_port = htons(this->port);
 
     if (bind(listenfd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        Log::fatal("bind error!");
+        logFatal("bind error!");
         return CABINET_ERR;
     }   
 
     if (listen(listenfd, 5)< 0) {
-        Log::fatal("listen port error!");
+        logFatal("listen port error!");
         return CABINET_ERR;
     }
     
     if (Util::setNonBlock(listenfd) == CABINET_ERR) {
-        Log::fatal("set listen fd non-bolck error!");
+        logFatal("set listen fd non-bolck error!");
         return CABINET_ERR;
     }
 
-    Log::notice("listening on port %d", this->port);
+    logNotice("listening on port %d", this->port);
     this->listenFd = listenfd;
     return CABINET_OK;
 }
@@ -90,19 +90,20 @@ int Server::listenOnPort() {
  *      成功返回描述符, 失败且不是因为非阻塞原因失败, 打印日志, 返回错误
  */
 int Server::getConnectFd() {
+    logDebug("server get client connect");
     //获取tcp/ipv4连接
     struct sockaddr_in clientAddr;
     socklen_t clientAddrLen = sizeof(clientAddr);
     int connectFd;
     if ((connectFd = accept(this->listenFd, (struct sockaddr *)&clientAddr, &clientAddrLen)) < 0) {
         if (errno != EWOULDBLOCK) {
-            Log::warning("accept client connect error");
+            logWarning("accept client connect error");
         }
         return CABINET_ERR;
     }
 
     if (Util::setNonBlock(connectFd) == CABINET_ERR) {
-        Log::warning("set connect fd non-bolck error!");
+        logWarning("set connect fd non-bolck error!");
         close(connectFd);
         return CABINET_ERR;
     }
@@ -112,12 +113,13 @@ int Server::getConnectFd() {
     inet_ntop(AF_INET, &clientAddr.sin_addr, ip, INET_ADDRSTRLEN);
     int port = ntohs(clientAddr.sin_port);
 
-    Log::notice("receive client connect, client_ip[%s], client_port[%d]", ip, port);
+    logNotice("receive client connect, client_ip[%s], client_port[%d]", ip, port);
 
     return connectFd;
 }
 
 void Server::onFire() const {
+    logDebug("server on fire");
     this->eventPoll->processEvent();
 }
 

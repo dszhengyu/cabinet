@@ -27,12 +27,12 @@ int Client::fillReceiveBuf() {
             return CABINET_OK;
         }
         else {
-            Log::warning("read from client client_id[%d] error", this->getClientId());
+            logWarning("read from client client_id[%d] error", this->getClientId());
             return CABINET_ERR;
         }
     }   
     else if (nRead == 0) {
-        Log::notice("client client_id[%d] close connection", this->getClientId());
+        logNotice("client client_id[%d] close connection", this->getClientId());
         return CABINET_ERR;
     }
 
@@ -41,7 +41,7 @@ int Client::fillReceiveBuf() {
 
 int Client::resolveReceiveBuf() {
     if (this->protocolStream.resolveReceiveBuf() == CABINET_ERR) {
-        Log::warning("client client_id[%d] input format error, input_buf[%s]", 
+        logWarning("client client_id[%d] input format error, input_buf[%s]", 
                 this->getClientId(), this->protocolStream.getReceiveBuf());
         return CABINET_ERR;
     }
@@ -55,7 +55,7 @@ int Client::executeCommand() {
     const string &commandName = this->protocolStream.getCommandName();
     Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
     if (selectedCommand(*this) == CABINET_ERR) {
-        Log::warning("client client_id[%d] execute command error", this->getClientId());
+        logWarning("client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
     }
     this->protocolStream.clear();
@@ -96,7 +96,7 @@ int Client::sendReply() {
             return CABINET_OK;
         }
         else {
-            Log::warning("write data to client client_id[%d] error", this->getClientId());
+            logWarning("write data to client client_id[%d] error", this->getClientId());
             return CABINET_ERR;
         }
     }
@@ -104,9 +104,13 @@ int Client::sendReply() {
     if (this->protocolStream.getSendBufLen() == 0) {
         //delete file event loop for write
         if (eventPoll->removeFileEvent(this, WRITE_EVENT) == CABINET_ERR) {
-            Log::warning("delete client client_id[%d] write file event error", this->getClientId());
+            logWarning("delete client client_id[%d] write file event error", this->getClientId());
             return CABINET_ERR;
         }
     }
     return CABINET_OK;
+}
+
+Client::~Client() {
+    close(this->fd);
 }

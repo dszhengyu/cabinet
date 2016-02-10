@@ -36,7 +36,7 @@ CabinetCli::CabinetCli(const char *serverIp, int serverPort) :
 {
     this->prompt = this->serverIp + string(":") + std::to_string(this->serverPort) + string(">");
     this->commandKeeperPtr = new CommandKeeper();
-    this->commandKeeperPtr->createCommandMap();
+    this->commandKeeperPtr->createClientCommandMap();
 }
 
 void CabinetCli::printPrompt() {
@@ -45,10 +45,11 @@ void CabinetCli::printPrompt() {
 }
 
 int CabinetCli::connectServer() {
+    logDebug("cabinet cli connect server");
     struct sockaddr_in clientAddr;
     
     if ((this->connectFd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        std::cout << "create socket err" << std::endl;
+        std::cout << "Create Socket Error" << std::endl;
         exit(1);
     }
 
@@ -56,12 +57,12 @@ int CabinetCli::connectServer() {
     clientAddr.sin_family = AF_INET;
     clientAddr.sin_port = htons(this->serverPort);
     if (inet_pton(AF_INET, this->serverIp.c_str(), &clientAddr.sin_addr) <= 0) {
-        std::cout << "create client addr err" << std::endl;
+        std::cout << "Create Client Address Error" << std::endl;
         exit(1);
     }
     
     if (connect(this->connectFd, (struct sockaddr *)&clientAddr, sizeof(clientAddr)) < 0) {
-        std::cout << "connect server err" << std::endl;
+        std::cout << "Connect Server Error" << std::endl;
         exit(1);
     }
     return CABINET_OK;
@@ -71,6 +72,7 @@ int CabinetCli::connectServer() {
  * notice: loop until user input sth
  */
 int CabinetCli::readClientInput() {
+    logDebug("cabinet cli read client input");
     while (this->clientInput.size() == 0) {
         this->resetAll();
         this->printPrompt();
@@ -81,6 +83,7 @@ int CabinetCli::readClientInput() {
 
 
 int CabinetCli::formatClientInput() {
+    logDebug("cabinet cli format client input");
     //split the client input into string vector
     while (this->clientInput.length() != 0) {
         size_t blankPosition = this->clientInput.find_first_of(' ');
@@ -141,7 +144,7 @@ int CabinetCli::formatClientInput() {
     this->protocolStream.appendCommandType(commandType);
     
     //append rest into protocol stream
-    for (auto begin = this->clientInputSplited.begin() + 1; begin != this->clientInputSplited.end(); ++begin) {
+    for (auto begin = this->clientInputSplited.begin(); begin != this->clientInputSplited.end(); ++begin) {
         this->protocolStream.appendReplyBody(*begin);
     }
 
@@ -152,6 +155,7 @@ int CabinetCli::formatClientInput() {
 }
 
 int CabinetCli::resetAll() {
+    logDebug("cabinet cli reset all");
     this->clientInput.clear();
     this->clientInputSplited.clear();
     this->protocolStream.clear();
@@ -159,6 +163,10 @@ int CabinetCli::resetAll() {
 }
 
 int CabinetCli::sendClientInput() {
+    logDebug("cabinet cli sending client input");
+    logDebug("cabinet protocol stream send buf[\n%s] buf_len[%d]", \
+            this->protocolStream.getSendBuf().c_str(), \
+            this->protocolStream.getSendBufLen());
     if (this->protocolStream.getSendBufLen() == 0) {
         this->resetAll();
         this->printPrompt();
@@ -175,16 +183,19 @@ int CabinetCli::sendClientInput() {
             this->printPrompt();
             return CABINET_ERR;
         }
+        logDebug("cabinet cli send [%d] byte", nWrite);
         this->protocolStream.eraseSendBuf(0, nWrite);
     }
     return CABINET_OK;
 }
 
 int CabinetCli::receiveServerOutput() {
+    logDebug("cabinet cli receiving server output");
     while (!this->protocolStream.isReceiveComplete()) {
         //read from server, fill buf
         char readBuf[this->READ_MAX_LEN];
         int nRead = 0;
+        logDebug("cabinet cli read from server");
         nRead = read(this->connectFd, readBuf, this->READ_MAX_LEN);
         if (nRead == -1) {
             std::cout << "Connect to Server Error" << std::endl;
@@ -198,6 +209,7 @@ int CabinetCli::receiveServerOutput() {
             this->printPrompt();
             return CABINET_ERR;
         }
+        logDebug("cabinet cli receive server output[/n%s] output_len[%d]", readBuf, nRead);
         this->protocolStream.fillReceiveBuf(readBuf, nRead);
 
         //resolve receive stream
@@ -212,6 +224,7 @@ int CabinetCli::receiveServerOutput() {
 }
 
 int CabinetCli::displayServerOutput() {
+    logDebug("cabinet cli display server output");
     for (const string &str : this->protocolStream.getReceiveArgv()) {
         std::cout << str << std::endl; 
     }

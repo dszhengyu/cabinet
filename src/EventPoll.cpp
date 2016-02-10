@@ -14,7 +14,7 @@ EventPoll::EventPoll(Server *server):
 int EventPoll::initEventPoll() {
     int eventPollFd = epoll_create(this->EPOLL_SIZE);
     if (eventPollFd == -1) {
-        Log::fatal("create epoll error");
+        logFatal("create epoll error");
         return CABINET_ERR;
     }
     this->eventPollFd = eventPollFd;
@@ -25,6 +25,7 @@ int EventPoll::initEventPoll() {
  * brief: 添加文件事件, 在epoll中添加, 在map中也需要添加
  */
 int EventPoll::createFileEvent(Client *client, int eventType) {
+    logDebug("event poll create file event, client client_id[%d], eventType[%d]", client->getClientId(), eventType);
     //alias the true map to edit
     fileeventmap_t *mapToEdit = nullptr;
     if (eventType == READ_EVENT) {
@@ -40,7 +41,7 @@ int EventPoll::createFileEvent(Client *client, int eventType) {
     }
 
     //modify epoll
-    this->fileEventOperation(client->getClientFd(), eventType, this->DEL_EVENT);
+    this->fileEventOperation(client->getClientFd(), eventType, this->ADD_EVENT);
 
     //modify map
     (*mapToEdit)[client->getClientFd()] = client;
@@ -52,6 +53,7 @@ int EventPoll::createFileEvent(Client *client, int eventType) {
  * brief: remove file event both in epoll and map
  */
 int EventPoll::removeFileEvent(Client *client, int eventType) {
+    logDebug("event poll remove file event, client client_id[%d], eventType[%d]", client->getClientId(), eventType);
     //alias the true map to edit
     fileeventmap_t *mapToEdit = nullptr;
     if (eventType == READ_EVENT) {
@@ -63,7 +65,7 @@ int EventPoll::removeFileEvent(Client *client, int eventType) {
 
     //find if the event is already delete
     if (mapToEdit->find(client->getClientFd()) == mapToEdit->end()) {
-        Log::warning("delete file event twice, client_id[%d]", client->getClientId());
+        logWarning("delete file event twice, client_id[%d]", client->getClientId());
         return CABINET_ERR;
     }
 
@@ -75,6 +77,7 @@ int EventPoll::removeFileEvent(Client *client, int eventType) {
 }
 
 int EventPoll::pollListenFd(int listenFd) {
+    logDebug("event poll poll listen fd");
     return this->fileEventOperation(listenFd, READ_EVENT, this->ADD_EVENT);
 }
 
@@ -93,22 +96,25 @@ int EventPoll::fileEventOperation(int fd, int eventType, int opType) {
 int EventPoll::processEvent() {
     while (1) {
         struct epoll_event events[this->EPOLL_SIZE];
+        logDebug("###epoll wait");
         int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, -1);
+        logDebug("###event comes~ event_number[%d]", eventNumber);
         if (eventNumber == 0) {
             continue;
         }
 
-        for (int processingNumber = 0; processingNumber < eventNumber; ++eventNumber) {
+        for (int processingNumber = 0; processingNumber < eventNumber; ++processingNumber) {
             int eventFd = events[processingNumber].data.fd;
             auto eventType = events[processingNumber].events;
             //监听套接字的事件来到
             //1. 获取连接套接字
             //2. 创建client
             //3. 将client监听可读加入eventpoll
-            if (eventFd == this->server->getListenFd() && eventType & EPOLLIN) {
+            if ((eventFd == this->server->getListenFd()) && (eventType & EPOLLIN)) {
+                logDebug("event poll listen fd readable");
                 int connectFd = 0;
                 if ((connectFd = this->server->getConnectFd()) == CABINET_ERR) {
-                    Log::warning("get connect fd error");
+                    logWarning("get connect fd error");
                     continue;
                 }
                 Client *newClient = this->server->createClient(connectFd);
@@ -123,26 +129,27 @@ int EventPoll::processEvent() {
             //
             //notice: client在任意步骤都可能失败, 若失败, 清理client的痕迹
             if (eventType & EPOLLIN) {
+                logDebug("event poll client fd readable");
                 if (this->readFileEventMap.find(eventFd) == this->readFileEventMap.end()) {
-                    Log::warning("Client lost in read map, maybe deleted before");
+                    logWarning("Client lost in read map, maybe deleted before");
                     continue;
                 }
                 Client *processingClient = readFileEventMap[eventFd];
                 if (processingClient->fillReceiveBuf() == CABINET_ERR) {
-                    Log::warning("client client_id[%d] fill input buf error, close it", processingClient->getClientId());
+                    logWarning("client client_id[%d] fill input buf error, close it", processingClient->getClientId());
                     this->deleteClient(processingClient);
                     continue;
                 }
 
                 if (processingClient->resolveReceiveBuf() == CABINET_ERR) {
-                    Log::warning("client client_id[%d] resolve input buf error, close it", processingClient->getClientId());
+                    logWarning("client client_id[%d] resolve input buf error, close it", processingClient->getClientId());
                     this->deleteClient(processingClient);
                     continue;
                 }
 
                 if (processingClient->isReceiveComplete() == true) {
                     if (processingClient->executeCommand() == CABINET_ERR) {
-                        Log::warning("client client_id[%d] execute command error, close it", processingClient->getClientId());
+                        logWarning("client client_id[%d] execute command error, close it", processingClient->getClientId());
                         this->deleteClient(processingClient);
                         continue;
                     }
@@ -153,13 +160,14 @@ int EventPoll::processEvent() {
             //client可写
             //1. 发送client数据
             if (eventType & EPOLLOUT) {
+                logDebug("event poll client fd writeable");
                 if (this->writeFileEventMap.find(eventFd) == this->writeFileEventMap.end()) {
-                    Log::warning("Client lost in read map, maybe deleted before");
+                    logWarning("Client lost in read map, maybe deleted before");
                     continue;
                 }
                 Client *processingClient = writeFileEventMap[eventFd];
                 if (processingClient->sendReply() == CABINET_ERR) {
-                    Log::warning("client client_id[%d] send reply error, close it", processingClient->getClientId());
+                    logWarning("client client_id[%d] send reply error, close it", processingClient->getClientId());
                     this->deleteClient(processingClient);
                     continue;
                 }
@@ -171,6 +179,7 @@ int EventPoll::processEvent() {
 }
 
 int EventPoll::deleteClient(Client *client) {
+    logWarning("event poll delete client client_id[%d]", client->getClientId());
     delete client;
     return CABINET_OK;
 }

@@ -16,7 +16,8 @@ class CommandKeeper
 public :
     typedef map<string, Command *> commandmap_t;
     CommandKeeper();
-    void createCommandMap();
+    void createServerCommandMap();
+    void createClientCommandMap();
     Command &selectCommand(const string &commandName);
     ~CommandKeeper();
 private:

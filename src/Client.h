@@ -26,6 +26,7 @@ public:
     int appendReplyBody(const char *);
     int getClientFd() const {return this->fd;}
     bool isReceiveComplete() const {return this->protocolStream.isReceiveComplete();}
+    ~Client();
 
 private:
     long clientId;

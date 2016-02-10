@@ -32,6 +32,7 @@ private:
     int eventPollFd;
     const int ADD_EVENT = 0;
     const int DEL_EVENT = 1;
+    const int MOD_EVENT = 2;
     const int EPOLL_SIZE = 1024;
 };
 

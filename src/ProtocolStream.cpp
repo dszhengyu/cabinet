@@ -17,11 +17,13 @@ ProtocolStream::ProtocolStream(bool hasCommandType):
 }
 
 int ProtocolStream::clear() {
+    this->inputBuf.clear();
     this->argc = -1;
-    this->commandType = '\0';
-    this->curArgvLen = -1;
     this->argv.clear();
+    this->curArgvLen = -1;
     this->receiveComplete = false;
+    this->commandType = '\0';
+    this->outputBuf.clear();
     return CABINET_OK;
 }
 
@@ -145,25 +147,32 @@ int ProtocolStream::resolveReceiveBuf() {
 }
 
 int ProtocolStream::initReplyHead(int argc) {
+    logDebug("start init reply head, argc[%d], \nsend_buf\n[\n%s\n]", argc, this->outputBuf.c_str());
     this->outputBuf.push_back('*');
+    logDebug("I am Here!!!!!!!!!!!!!!!!!");
     this->outputBuf.append(to_string(argc));
     this->outputBuf.push_back('\n');
+    logDebug("end init reply head, argc[%d], \nsend_buf\n[\n%s\n]", argc, this->outputBuf.c_str());
     return CABINET_OK;
 }
 
 int ProtocolStream::appendCommandType(const char commandType) {
+    logDebug("start append command type, command type[%c], \nsend_buf\n[\n%s\n]", commandType, this->outputBuf.c_str());
     this->outputBuf.push_back('#');
     this->outputBuf.push_back(commandType);
     this->outputBuf.push_back('\n');
+    logDebug("end append command type, command type[%c], \nsend_buf\n[\n%s\n]", commandType, this->outputBuf.c_str());
     return CABINET_OK;
 }
 
 int ProtocolStream::appendReplyBody(const string &part) {
+    logDebug("start append reply body, body_content[%s], \nsend_buf\n[\n%s\n]", part.c_str(), this->outputBuf.c_str());
     this->outputBuf.push_back('$');
     this->outputBuf.append(to_string(part.length()));
     this->outputBuf.push_back('\n');
     this->outputBuf.append(part);
     this->outputBuf.push_back('\n');
+    logDebug("end append reply body, body_content[%s], \nsend_buf\n[\n%s\n]", part.c_str(), this->outputBuf.c_str());
     return CABINET_OK;
 }
 

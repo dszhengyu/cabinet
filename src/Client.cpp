@@ -54,36 +54,38 @@ int Client::resolveReceiveBuf() {
 int Client::executeCommand() {
     const string &commandName = this->protocolStream.getCommandName();
     Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
-    if (selectedCommand(*this) == CABINET_ERR) {
+    if (selectedCommand(this) == CABINET_ERR) {
         logWarning("client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
     }
-    this->protocolStream.clear();
-
     return CABINET_OK;
 }
 
 int Client::initReplyHead(int argc) {
-    //在eventloop中安装可写事件
-    eventPoll->createFileEvent(this, WRITE_EVENT);
+    logDebug("init reply head");
+    //在eventloop中删掉可读, 安装可写事件
+    this->eventPoll->removeFileEvent(this, READ_EVENT);
+    this->eventPoll->createFileEvent(this, WRITE_EVENT);
 
     this->protocolStream.initReplyHead(argc);
     return CABINET_OK;
 }
 
 int Client::appendReplyBody(const string &part) {
-    //在eventloop中安装可写事件
-    eventPoll->createFileEvent(this, WRITE_EVENT);
-
+    logDebug("append reply body");
     this->protocolStream.appendReplyBody(part);
     return CABINET_OK;
 }
 
 /* 
  * brief: 当输出缓冲区中有数据需要发送给客户时调用
- * notice: 发送完成后, 需要删除eventloop中的可写轮询
+ * notice: 发送完成后, 需要删除eventloop中的可写轮询, 安装可读轮询
  */
 int Client::sendReply() {
+    logDebug("sending reply");
+    logDebug("protocol stream send \nbuf[\n%s]\n buf_len[%d]", 
+            this->protocolStream.getSendBuf().c_str(), 
+            this->protocolStream.getSendBufLen());
     if (this->protocolStream.getSendBufLen() == 0) {
         return CABINET_OK;
     }
@@ -100,13 +102,20 @@ int Client::sendReply() {
             return CABINET_ERR;
         }
     }
+    logDebug("send [%d] byte", nWrite);
     this->protocolStream.eraseSendBuf(0, nWrite);
     if (this->protocolStream.getSendBufLen() == 0) {
         //delete file event loop for write
-        if (eventPoll->removeFileEvent(this, WRITE_EVENT) == CABINET_ERR) {
+        if (this->eventPoll->removeFileEvent(this, WRITE_EVENT) == CABINET_ERR) {
             logWarning("delete client client_id[%d] write file event error", this->getClientId());
             return CABINET_ERR;
         }
+        //install file event loop for read
+        if (this->eventPoll->createFileEvent(this, READ_EVENT) == CABINET_ERR) {
+            logWarning("create client client_id[%d] read file event error", this->getClientId());
+            return CABINET_ERR;
+        }
+        this->protocolStream.clear();
     }
     return CABINET_OK;
 }

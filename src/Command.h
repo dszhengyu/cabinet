@@ -13,7 +13,7 @@ class Command
 public:
     Command(): calledTimes(0) {}
 #ifdef CABINET_SERVER
-    virtual int operator()(Client &client) const = 0;
+    virtual int operator()(Client *client) const = 0;
 #endif
     virtual bool isCommandValid() const = 0;
     virtual int commandArgc() const = 0;

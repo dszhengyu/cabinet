@@ -103,7 +103,6 @@ int CabinetCli::formatClientInput() {
     this->clientInput.clear();
     if (this->clientInputSplited.size() == 0) {
         this->resetAll();
-        this->printPrompt();
         return CABINET_ERR;
     }
 
@@ -117,24 +116,21 @@ int CabinetCli::formatClientInput() {
     if (!selectedCommand.isCommandValid()) {
         std::cout << "Command is Invalid" << std::endl;
         this->resetAll();
-        this->printPrompt();
         return CABINET_ERR;
     }
     //check command argc is correct
     int argc = selectedCommand.commandArgc();
     if (argc >= 0) {
         if (((int)this->clientInputSplited.size() - 1) != argc) {
-            std::cout << "Command Parameter Error" << std::endl;
+            std::cout << "Command Parameter Number Error" << std::endl;
             this->resetAll();
-            this->printPrompt();
             return CABINET_ERR;
         }
     }
     else {
         if ((-((int)this->clientInputSplited.size() - 1)) > (argc)) {
-            std::cout << "Command Parameter Error" << std::endl;
+            std::cout << "Command Parameter Number Error" << std::endl;
             this->resetAll();
-            this->printPrompt();
             return CABINET_ERR;
         }
     }
@@ -164,12 +160,11 @@ int CabinetCli::resetAll() {
 
 int CabinetCli::sendClientInput() {
     logDebug("cabinet cli sending client input");
-    logDebug("cabinet protocol stream send buf[\n%s] buf_len[%d]", \
+    logDebug("cabinet protocol stream send \nbuf[\n%s]\n buf_len[%d]", \
             this->protocolStream.getSendBuf().c_str(), \
             this->protocolStream.getSendBufLen());
     if (this->protocolStream.getSendBufLen() == 0) {
         this->resetAll();
-        this->printPrompt();
         return CABINET_ERR;
     }
 
@@ -180,7 +175,6 @@ int CabinetCli::sendClientInput() {
         if (nWrite == -1) {
             std::cout << "Send Command to Server Error" << std::endl;
             this->resetAll();
-            this->printPrompt();
             return CABINET_ERR;
         }
         logDebug("cabinet cli send [%d] byte", nWrite);
@@ -200,13 +194,11 @@ int CabinetCli::receiveServerOutput() {
         if (nRead == -1) {
             std::cout << "Connect to Server Error" << std::endl;
             this->resetAll();
-            this->printPrompt();
             return CABINET_ERR;
         }   
         else if (nRead == 0) {
             std::cout << "Server Close Connection" << std::endl;
-            this->resetAll();
-            this->printPrompt();
+            exit(1);
             return CABINET_ERR;
         }
         logDebug("cabinet cli receive server output[/n%s] output_len[%d]", readBuf, nRead);
@@ -216,7 +208,6 @@ int CabinetCli::receiveServerOutput() {
         if (this->protocolStream.resolveReceiveBuf() == CABINET_ERR) {
             std::cout << "Server Reply Format Error" << std::endl;
             this->resetAll();
-            this->printPrompt();
             return CABINET_ERR;
         }
     }
@@ -229,6 +220,5 @@ int CabinetCli::displayServerOutput() {
         std::cout << str << std::endl; 
     }
     this->resetAll();
-    this->printPrompt();
     return CABINET_OK;
 }

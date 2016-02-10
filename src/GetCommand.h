@@ -13,7 +13,7 @@ class GetCommand: public Command
 {
 public:
 #ifdef CABINET_SERVER
-    int operator()(Client &client) const;
+    int operator()(Client *client) const;
 #endif
     bool isCommandValid() const {return true;}
     int commandArgc() const {return 1;}

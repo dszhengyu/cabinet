@@ -13,7 +13,7 @@ class NoMatchCommand: public Command
 {
 public:
 #ifdef CABINET_SERVER
-    int operator()(Client &client) const;
+    int operator()(Client *client) const;
 #endif
     bool isCommandValid() const {return false;}
     int commandArgc() const {return 0;}

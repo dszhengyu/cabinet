@@ -83,12 +83,16 @@ int EventPoll::pollListenFd(int listenFd) {
 
 int EventPoll::fileEventOperation(int fd, int eventType, int opType) {
     int op = ((opType == this->ADD_EVENT) ? EPOLL_CTL_ADD : EPOLL_CTL_DEL);
+    //int op = ((opType == this->ADD_EVENT) ? EPOLL_CTL_ADD : ((opType == this->DEL_EVENT) ? EPOLL_CTL_DEL : EPOLL_CTL_MOD));
     int pollEvent = ((eventType == READ_EVENT) ? EPOLLIN : EPOLLOUT);
     struct epoll_event ee;
     ee.events = pollEvent;
     ee.data.fd = fd;
-    epoll_ctl(this->eventPollFd, op, fd, &ee);
-
+    logDebug("epoll_ctl fd[%d], event_type[%d], op_type[%d]", fd, eventType, opType);
+    if (epoll_ctl(this->eventPollFd, op, fd, &ee) != 0) {
+        logFatal("epoll_ctl error, fd[%d], event_type[%d], op_type[%d], errno[%d]", fd, eventType, opType, errno);
+        exit(1);
+    }
     return CABINET_OK;
 }
 
@@ -136,7 +140,8 @@ int EventPoll::processEvent() {
                 }
                 Client *processingClient = readFileEventMap[eventFd];
                 if (processingClient->fillReceiveBuf() == CABINET_ERR) {
-                    logWarning("client client_id[%d] fill input buf error, close it", processingClient->getClientId());
+                    logWarning("client client_id[%d] fill input buf error, maybe client close connection, close it", 
+                            processingClient->getClientId());
                     this->deleteClient(processingClient);
                     continue;
                 }

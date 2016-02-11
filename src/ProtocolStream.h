@@ -36,6 +36,5 @@ private:
     bool receiveComplete;
     char commandType;
     string outputBuf;
-    
 };
 #endif

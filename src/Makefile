@@ -5,11 +5,12 @@ CABINET_CLIENT_NAME=cabinet-cli
 
 #Common Dependency
 CABINET_COMMAND_OBJECT=GetCommand.o NoMatchCommand.o CommandKeeper.o 
-CABINET_COMMON_HEADER=Command.h Const.h
+CABINET_COMMON_HEADER=Command.h Const.h ValueObj.h
 CABINET_COMMON_OBJECT=Log.o Util.o ProtocolStream.o $(CABINET_COMMAND_OBJECT)
+CABINET_DATABASE_OBJECT=DataBase.o StringObj.o
 
 #Target Dependency
-CABINET_SERVER_OBJECT=cabinet-server.o Server.o Client.o EventPoll.o $(CABINET_COMMON_OBJECT)
+CABINET_SERVER_OBJECT=cabinet-server.o Server.o Client.o EventPoll.o $(CABINET_COMMON_OBJECT) $(CABINET_DATABASE_OBJECT)
 CABINET_CLIENT_OBJECT=cabinet-cli.o CabinetCli.o $(CABINET_COMMON_OBJECT)
 
 #Compile Arguements

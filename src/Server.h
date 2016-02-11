@@ -9,9 +9,11 @@
 #include "CommandKeeper.h"
 #include "Client.h"
 #include "EventPoll.h"
+#include "DataBase.h"
 class CommandKeeper;
 class Client;
 class EventPoll;
+class DataBase;
 
 class Server
 {
@@ -33,7 +35,7 @@ private:
     int listenFd;
     CommandKeeper *commandKeeperPtr;
     EventPoll *eventPoll;
-    //DataBase *db;
+    DataBase *db;
 };
 
 #endif

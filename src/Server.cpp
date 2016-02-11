@@ -14,7 +14,8 @@ Server::Server() :
     port(-1),
     listenFd(-1),
     commandKeeperPtr(nullptr),
-    eventPoll(nullptr)
+    eventPoll(nullptr),
+    db(nullptr)
 {
 
 } 
@@ -42,10 +43,12 @@ void Server::init() {
     }
 
     this->eventPoll->pollListenFd(this->getListenFd());
+
+    this->db = new DataBase();
 }
 
 Client *Server::createClient(int connectFd) {
-    Client * client = new Client(this->clientIdMax, commandKeeperPtr, connectFd, eventPoll);
+    Client * client = new Client(this->clientIdMax, this->commandKeeperPtr, connectFd, this->eventPoll, this->db);
     ++this->clientIdMax;
     logNotice("create client, client_id[%d]", client->getClientId());
     return client;

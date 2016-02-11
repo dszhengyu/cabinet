@@ -65,8 +65,8 @@ int EventPoll::removeFileEvent(Client *client, int eventType) {
 
     //find if the event is already delete
     if (mapToEdit->find(client->getClientFd()) == mapToEdit->end()) {
-        logWarning("delete file event twice, client_id[%d]", client->getClientId());
-        return CABINET_ERR;
+        logWarning("file event already deleted, client_id[%d]", client->getClientId());
+        return CABINET_OK;
     }
 
     this->fileEventOperation(client->getClientFd(), eventType, this->DEL_EVENT);
@@ -185,6 +185,8 @@ int EventPoll::processEvent() {
 
 int EventPoll::deleteClient(Client *client) {
     logWarning("event poll delete client client_id[%d]", client->getClientId());
+    this->removeFileEvent(client, READ_EVENT);
+    this->removeFileEvent(client, WRITE_EVENT);
     delete client;
     return CABINET_OK;
 }

@@ -61,7 +61,7 @@ int ProtocolStream::resolveReceiveBuf() {
     }
 
     if (this->argc == -1) {
-        logDebug("searching for *");
+        //logDebug("searching for *");
         //开始解析新请求
         if (this->inputBuf[0] != '*') {
             logWarning("protocol stream input format error, missing *, input_buf[%s]", this->inputBuf.c_str());
@@ -81,11 +81,11 @@ int ProtocolStream::resolveReceiveBuf() {
         if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
         }
-        logDebug("argc get. argc[%d]", this->argc);
+        //logDebug("argc get. argc[%d]", this->argc);
     }
 
     if (this->hasCommandType && this->commandType == '\0') {
-        logDebug("searching for #");
+        //logDebug("searching for #");
         //开始解析请求属性
         if (this->inputBuf[0] != '#') {
             logWarning("protocol stream input format error, missing #(command type), input_buf[%s]", this->inputBuf.c_str());
@@ -105,14 +105,14 @@ int ProtocolStream::resolveReceiveBuf() {
         if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
         }
-        logDebug("command type get command type[%c]", this->commandType);
+        //logDebug("command type get command type[%c]", this->commandType);
     }
 
     //开始解析参数
     while (this->isReceiveBufAvaliable()) {
         size_t firstLF = this->inputBuf.find_first_of('\n');
         if (this->curArgvLen == -1) {
-            logDebug("searching for argv len");
+            //logDebug("searching for argv len");
             //当前参数长度未解析
             if (this->inputBuf[0] != '$') {
                 logWarning("protocol stream input format error, missing $, input_buf[%s]", this->inputBuf.c_str());
@@ -120,12 +120,12 @@ int ProtocolStream::resolveReceiveBuf() {
             }
             this->curArgvLen = stoi(string(this->inputBuf, 1, firstLF));
             this->inputBuf.erase(0, firstLF + 1);
-            logDebug("argv len get, argv_len[%d]", this->curArgvLen);
+            //logDebug("argv len get, argv_len[%d]", this->curArgvLen);
             continue;
         }
         else {
             //按照长度获取当前参数
-            logDebug("searching for argv");
+            //logDebug("searching for argv");
             if ((long)firstLF != this->curArgvLen) {
                 logWarning("protocol stream input format error, missing argv, input_buf[%s]", this->inputBuf.c_str());
                 return CABINET_ERR;
@@ -133,7 +133,7 @@ int ProtocolStream::resolveReceiveBuf() {
             this->argv.push_back(string(this->inputBuf, 0, firstLF));
             this->curArgvLen = -1;
             this->inputBuf.erase(0, firstLF + 1);
-            logDebug("argv get, argv[%s]", (this->argv.end() - 1)->c_str());
+            //logDebug("argv get, argv[%s]", (this->argv.end() - 1)->c_str());
             --this->argc;
             if (this->argc == 0) {
                 this->receiveComplete = true;
@@ -147,32 +147,31 @@ int ProtocolStream::resolveReceiveBuf() {
 }
 
 int ProtocolStream::initReplyHead(int argc) {
-    logDebug("start init reply head, argc[%d], \nsend_buf\n[\n%s\n]", argc, this->outputBuf.c_str());
+    //logDebug("start init reply head, argc[%d], \nsend_buf\n[\n%s\n]", argc, this->outputBuf.c_str());
     this->outputBuf.push_back('*');
-    logDebug("I am Here!!!!!!!!!!!!!!!!!");
     this->outputBuf.append(to_string(argc));
     this->outputBuf.push_back('\n');
-    logDebug("end init reply head, argc[%d], \nsend_buf\n[\n%s\n]", argc, this->outputBuf.c_str());
+    //logDebug("end init reply head, argc[%d], \nsend_buf\n[\n%s\n]", argc, this->outputBuf.c_str());
     return CABINET_OK;
 }
 
 int ProtocolStream::appendCommandType(const char commandType) {
-    logDebug("start append command type, command type[%c], \nsend_buf\n[\n%s\n]", commandType, this->outputBuf.c_str());
+    //logDebug("start append command type, command type[%c], \nsend_buf\n[\n%s\n]", commandType, this->outputBuf.c_str());
     this->outputBuf.push_back('#');
     this->outputBuf.push_back(commandType);
     this->outputBuf.push_back('\n');
-    logDebug("end append command type, command type[%c], \nsend_buf\n[\n%s\n]", commandType, this->outputBuf.c_str());
+    //logDebug("end append command type, command type[%c], \nsend_buf\n[\n%s\n]", commandType, this->outputBuf.c_str());
     return CABINET_OK;
 }
 
 int ProtocolStream::appendReplyBody(const string &part) {
-    logDebug("start append reply body, body_content[%s], \nsend_buf\n[\n%s\n]", part.c_str(), this->outputBuf.c_str());
+    //logDebug("start append reply body, body_content[%s], \nsend_buf\n[\n%s\n]", part.c_str(), this->outputBuf.c_str());
     this->outputBuf.push_back('$');
     this->outputBuf.append(to_string(part.length()));
     this->outputBuf.push_back('\n');
     this->outputBuf.append(part);
     this->outputBuf.push_back('\n');
-    logDebug("end append reply body, body_content[%s], \nsend_buf\n[\n%s\n]", part.c_str(), this->outputBuf.c_str());
+    //logDebug("end append reply body, body_content[%s], \nsend_buf\n[\n%s\n]", part.c_str(), this->outputBuf.c_str());
     return CABINET_OK;
 }
 

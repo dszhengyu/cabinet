@@ -21,6 +21,7 @@ public :
     Command &selectCommand(const string &commandName);
     ~CommandKeeper();
 private:
+    void createNormalCommandMap();
     commandmap_t commandMap;
 };
 

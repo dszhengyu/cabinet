@@ -35,3 +35,11 @@ int DataBase::deleteKey(const string &key) {
     return CABINET_OK;
 }
 
+int DataBase::insertKey(const string &key, ValueObj *value) {
+    auto dataIter = dataSpace.find(key);
+    if (dataIter != dataSpace.end()) {
+        return CABINET_ERR;
+    }
+    dataSpace[key] = value;
+    return CABINET_OK;
+}

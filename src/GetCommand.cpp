@@ -15,7 +15,7 @@ int GetCommand::operator()(Client *client) const {
     //check user resolved input
     const vector<string> &argv = client->getReceiveArgv();
     if (argv.size() != (unsigned int)(this->commandArgc() + 1)) {
-        logWarning("get command receive error number argv! argv_len[%d]", argv.size());
+        logWarning("get command receive error number of argv! argv_len[%d]", argv.size());
         client->initReplyHead(1);
         client->appendReplyBody(string("get no complete yet"));
         return CABINET_ERR;
@@ -41,7 +41,7 @@ int GetCommand::operator()(Client *client) const {
     }
 
     //return value
-    const string &stringValue = value->get();
+    const string &stringValue = ((StringObj *)value)->get();
     logDebug("get correct thing, key[%s], value[%s]", keyName.c_str(), stringValue.c_str());
     client->initReplyHead(1);
     client->appendReplyBody(stringValue);

@@ -12,10 +12,7 @@ public:
     ~ValueObj(){};
     const int getValueType() const {return this->valueType;}
 
-    //string object
     static const int STRING_TYPE = 1;
-    virtual const string &get() const = 0;
-    virtual void set(const string &newValue) = 0;
 
 protected:
     int valueType;

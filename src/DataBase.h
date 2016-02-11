@@ -15,6 +15,7 @@ public:
     DataBase();
     dataspace_t getDataSpace() {return this->dataSpace;}
     int deleteKey(const string &key);
+    int insertKey(const string &key, ValueObj *value);
     ValueObj *getValue(const string &key);
 
 private:

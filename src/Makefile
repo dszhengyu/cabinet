@@ -4,7 +4,7 @@ CABINET_SERVER_NAME=cabinet-server
 CABINET_CLIENT_NAME=cabinet-cli
 
 #Common Dependency
-CABINET_COMMAND_OBJECT=GetCommand.o NoMatchCommand.o CommandKeeper.o 
+CABINET_COMMAND_OBJECT=GetCommand.o SetCommand.o DelCommand.o NoMatchCommand.o CommandKeeper.o 
 CABINET_COMMON_HEADER=Command.h Const.h ValueObj.h
 CABINET_COMMON_OBJECT=Log.o Util.o ProtocolStream.o $(CABINET_COMMAND_OBJECT)
 CABINET_DATABASE_OBJECT=DataBase.o StringObj.o

@@ -10,7 +10,7 @@ CABINET_COMMON_OBJECT=Log.o Util.o ProtocolStream.o $(CABINET_COMMAND_OBJECT)
 CABINET_DATABASE_OBJECT=DataBase.o StringObj.o
 
 #Target Dependency
-CABINET_SERVER_OBJECT=cabinet-server.o Server.o Client.o EventPoll.o $(CABINET_COMMON_OBJECT) $(CABINET_DATABASE_OBJECT)
+CABINET_SERVER_OBJECT=cabinet-server.o Server.o Client.o EventPoll.o PersistenceFile.o  $(CABINET_COMMON_OBJECT) $(CABINET_DATABASE_OBJECT)
 CABINET_CLIENT_OBJECT=cabinet-cli.o CabinetCli.o $(CABINET_COMMON_OBJECT)
 
 #Compile Arguements

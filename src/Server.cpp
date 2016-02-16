@@ -15,7 +15,8 @@ Server::Server() :
     listenFd(-1),
     commandKeeperPtr(nullptr),
     eventPoll(nullptr),
-    db(nullptr)
+    db(nullptr),
+    pf(nullptr)
 {
 
 } 
@@ -45,12 +46,19 @@ void Server::init() {
     this->eventPoll->pollListenFd(this->getListenFd());
 
     this->db = new DataBase();
+
+    if (PF) {
+        logNotice("persistence is require");
+        this->pf = new PersistenceFile();
+        this->importPF();
+    }
+    logNotice("init server done");
 }
 
 Client *Server::createClient(int connectFd) {
-    Client * client = new Client(this->clientIdMax, this->commandKeeperPtr, connectFd, this->eventPoll, this->db);
+    Client * client = new Client(this->clientIdMax, this->commandKeeperPtr, connectFd, this->eventPoll, this->db, this->pf);
     ++this->clientIdMax;
-    logNotice("create client, client_id[%d]", client->getClientId());
+    logNotice("create client, client_id[%d], client_connect_fd[%d]", client->getClientId(), connectFd);
     return client;
 }
 
@@ -124,6 +132,45 @@ int Server::getConnectFd() {
 void Server::onFire() const {
     logDebug("server on fire");
     this->eventPoll->processEvent();
+}
+
+/* 
+ * brief: 导入持久化文件
+ */
+int Server::importPF() {
+    logNotice("start import persistence file");
+    //create a client, set client category
+    Client *pFClient = this->createClient(-1);
+    pFClient->setCategory(Client::LOCAL_PF_CLIENT);
+
+    //init read pf
+    if (this->pf->initReadPF() == CABINET_ERR) {
+        logWarning("init persistence file error");
+        return CABINET_ERR;
+    }
+
+    //start loop, read one entry from pf
+    while (this->pf->readNextPFEntry() != CABINET_ERR) {
+        //feed the client, resolve it, execute it
+        const string &curPFEntry = this->pf->getCurPFEntry();
+        logDebug("--importing persistence file, current entry[\n%s]", curPFEntry.c_str());
+        pFClient->fillReceiveBuf(curPFEntry); 
+        if (pFClient->resolveReceiveBuf() == CABINET_ERR) {
+            logWarning("import persistence file error, revolve error, current entry[\n%s]", curPFEntry.c_str());
+            return CABINET_ERR;
+        }
+
+        if (pFClient->isReceiveComplete() == true) {
+            if (pFClient->executeCommand() == CABINET_ERR) {
+                logWarning("import persistence file error, execute error, current entry[\n%s]", curPFEntry.c_str());
+                return CABINET_ERR;
+            }
+        }
+        pFClient->resetClient();
+    }
+    this->pf->endReadPF();
+    logNotice("end import persistence file");
+    return CABINET_OK;
 }
 
 Server::~Server() {

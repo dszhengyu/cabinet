@@ -18,6 +18,7 @@ public:
     virtual bool isCommandValid() const = 0;
     virtual int commandArgc() const = 0;
     virtual const char commandType() const = 0;
+    virtual bool needPF() const = 0;
     int getCalledTimes() const {return calledTimes;}
     virtual ~Command() {}
 private:

@@ -3,10 +3,13 @@
 #include <unistd.h>
 
 
-Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll, DataBase *dataBasePtr, PersistenceFile *pf):
+Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, const string &ip, const int port,
+        EventPoll *eventPoll, DataBase *dataBasePtr, PersistenceFile *pf):
     clientId(clientId),
     commandKeeper(commandKeeper),
     fd(fd),
+    ip(ip),
+    port(port),
     eventPoll(eventPoll),
     dataBasePtr(dataBasePtr),
     protocolStream(true),

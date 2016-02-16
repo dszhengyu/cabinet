@@ -20,7 +20,8 @@ using std::string;
 class Client
 {
 public:
-    Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll, DataBase *dataBasePtr, PersistenceFile *pf);
+    Client(long clientId, CommandKeeper *commandKeeper, int fd, const string &ip, const int port, 
+            EventPoll *eventPoll, DataBase *dataBasePtr, PersistenceFile *pf);
     long getClientId() const {return this->clientId;}
     int fillReceiveBuf();
     int fillReceiveBuf(const string &str);
@@ -38,6 +39,7 @@ public:
     void setCategory(const char newCategory) {this->category = newCategory;}
     const string &getCurCommandBuf() const {return this->protocolStream.getCurCommandBuf();}
     int resetClient();
+    const string &getIp() const {return this->ip;}
     ~Client();
     static const char NORMAL_CLIENT = '\0';
     static const char LOCAL_PF_CLIENT = 'L';
@@ -46,6 +48,8 @@ private:
     long clientId;
     CommandKeeper *commandKeeper;
     int fd;
+    string ip;
+    int port;
     EventPoll *eventPoll;
     DataBase *dataBasePtr;
     ProtocolStream protocolStream;

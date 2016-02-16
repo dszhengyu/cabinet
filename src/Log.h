@@ -22,7 +22,7 @@ private:
     static void log(const char *logFileName, const char *logHeader, const char *fileName, int line, const char *format, va_list args);
     constexpr const static char *wLogFileName = "cabinet.warning.log";
     constexpr const static char *nLogFileName = "cabinet.notice.log";
-    const static int BUF_MAX_SIZE = 100;
+    const static int BUF_MAX_SIZE = 1024 * 1000;
 };
 
 #endif

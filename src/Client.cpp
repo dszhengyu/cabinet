@@ -145,10 +145,14 @@ int Client::sendReply() {
             logWarning("create client client_id[%d] read file event error", this->getClientId());
             return CABINET_ERR;
         }
-        this->protocolStream.clear();
+        this->resetClient();
     }
     return CABINET_OK;
 }
+int Client::resetClient() {
+    this->protocolStream.clear();
+    return CABINET_OK;
+ }
 
 Client::~Client() {
     close(this->fd);

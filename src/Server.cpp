@@ -166,6 +166,7 @@ int Server::importPF() {
                 return CABINET_ERR;
             }
         }
+        pFClient->resetClient();
     }
     this->pf->endReadPF();
     logNotice("end import persistence file");

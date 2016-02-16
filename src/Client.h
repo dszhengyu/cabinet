@@ -37,6 +37,7 @@ public:
     char getCategory() const {return this->category;}
     void setCategory(const char newCategory) {this->category = newCategory;}
     const string &getCurCommandBuf() const {return this->protocolStream.getCurCommandBuf();}
+    int resetClient();
     ~Client();
     static const char NORMAL_CLIENT = '\0';
     static const char LOCAL_PF_CLIENT = 'L';

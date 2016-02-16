@@ -20,7 +20,7 @@
 项目的需求及迭代步骤 请见 [需求文档](https://github.com/dszhengyu/cabinet/blob/master/%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3.md)    
 项目的设计图 [请点我](https://www.processon.com/diagrams) (未分享)    
 
-###2016-2-12    
+###2016-2-12-v1.1    
 v1.1可以做的有:    
 1. 记录客户连接的ip和端口(简单)    
 2. cli实现作业控制, 后台转前台时候, 打印终端提示符    

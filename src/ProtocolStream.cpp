@@ -7,6 +7,7 @@ using std::to_string;
 ProtocolStream::ProtocolStream(bool hasCommandType):
     hasCommandType(hasCommandType),
     inputBuf(),
+    curCommandBuf(),
     argc(-1),
     argv(),
     curArgvLen(-1),
@@ -18,6 +19,7 @@ ProtocolStream::ProtocolStream(bool hasCommandType):
 
 int ProtocolStream::clear() {
     this->inputBuf.clear();
+    this->curCommandBuf.clear();
     this->argc = -1;
     this->argv.clear();
     this->curArgvLen = -1;
@@ -29,6 +31,11 @@ int ProtocolStream::clear() {
 
 int ProtocolStream::fillReceiveBuf(const char *str, int strLen) {
     this->inputBuf.append(str, strLen);
+    return CABINET_OK;    
+}
+
+int ProtocolStream::fillReceiveBuf(const string &str) {
+    this->inputBuf.append(str);
     return CABINET_OK;    
 }
 
@@ -77,6 +84,7 @@ int ProtocolStream::resolveReceiveBuf() {
             logWarning("protocol stream input format error, argc <= 0, input_buf[%s]", this->inputBuf.c_str());
             return CABINET_ERR;
         }
+        this->curCommandBuf.append(this->inputBuf, 0, firstLF + 1);
         this->inputBuf.erase(0, firstLF + 1);
         if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
@@ -101,6 +109,7 @@ int ProtocolStream::resolveReceiveBuf() {
             return CABINET_ERR;
         }
         this->commandType = this->inputBuf[1];
+        this->curCommandBuf.append(this->inputBuf, 0, firstLF + 1);
         this->inputBuf.erase(0, firstLF + 1);
         if (!this->isReceiveBufAvaliable()) {
             return CABINET_OK;    
@@ -119,6 +128,7 @@ int ProtocolStream::resolveReceiveBuf() {
                 return CABINET_ERR;
             }
             this->curArgvLen = stoi(string(this->inputBuf, 1, firstLF));
+            this->curCommandBuf.append(this->inputBuf, 0, firstLF + 1);
             this->inputBuf.erase(0, firstLF + 1);
             //logDebug("argv len get, argv_len[%d]", this->curArgvLen);
             continue;
@@ -132,6 +142,7 @@ int ProtocolStream::resolveReceiveBuf() {
             }
             this->argv.push_back(string(this->inputBuf, 0, firstLF));
             this->curArgvLen = -1;
+            this->curCommandBuf.append(this->inputBuf, 0, firstLF + 1);
             this->inputBuf.erase(0, firstLF + 1);
             //logDebug("argv get, argv[%s]", (this->argv.end() - 1)->c_str());
             --this->argc;

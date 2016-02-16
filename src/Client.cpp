@@ -3,13 +3,15 @@
 #include <unistd.h>
 
 
-Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll, DataBase *dataBasePtr):
+Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, EventPoll *eventPoll, DataBase *dataBasePtr, PersistenceFile *pf):
     clientId(clientId),
     commandKeeper(commandKeeper),
     fd(fd),
     eventPoll(eventPoll),
     dataBasePtr(dataBasePtr),
-    protocolStream(true)
+    protocolStream(true),
+    category(Client::NORMAL_CLIENT),
+    pf(pf)
 {
 
 }
@@ -40,6 +42,10 @@ int Client::fillReceiveBuf() {
     return this->protocolStream.fillReceiveBuf(readBuf, nRead);
 }
 
+int Client::fillReceiveBuf(const string &str) {
+    return this->protocolStream.fillReceiveBuf(str);
+}
+
 int Client::resolveReceiveBuf() {
     if (this->protocolStream.resolveReceiveBuf() == CABINET_ERR) {
         logWarning("client client_id[%d] input format error, input_buf[%s]", 
@@ -51,10 +57,21 @@ int Client::resolveReceiveBuf() {
 
 /* 
  * brief: 当输入缓冲区中当前命令解析完毕时调用
+ * pf: when it is not a pf client and pf is require, pf need pf command
+ *
  */
 int Client::executeCommand() {
     const string &commandName = this->protocolStream.getCommandName();
     Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
+
+    //do pf
+    if ((this->category != Client::LOCAL_PF_CLIENT) && 
+            (pf != nullptr) &&
+            (selectedCommand.needPF() == true)) {
+        this->pf->appendToPF(this);
+    }
+
+    //execute
     if (selectedCommand(this) == CABINET_ERR) {
         logWarning("client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
@@ -64,6 +81,10 @@ int Client::executeCommand() {
 
 int Client::initReplyHead(int argc) {
     logDebug("init reply head");
+    if (this->category != NORMAL_CLIENT) {
+        logDebug("no normal client no reply");
+        return CABINET_OK; 
+    }
     //在eventloop中删掉可读, 安装可写事件
     this->eventPoll->removeFileEvent(this, READ_EVENT);
     this->eventPoll->createFileEvent(this, WRITE_EVENT);
@@ -74,6 +95,10 @@ int Client::initReplyHead(int argc) {
 
 int Client::appendReplyBody(const string &part) {
     logDebug("append reply body");
+    if (this->category != NORMAL_CLIENT) {
+        logDebug("no normal client no reply");
+        return CABINET_OK; 
+    }
     this->protocolStream.appendReplyBody(part);
     return CABINET_OK;
 }
@@ -84,6 +109,10 @@ int Client::appendReplyBody(const string &part) {
  */
 int Client::sendReply() {
     logDebug("sending reply");
+    if (this->category != NORMAL_CLIENT) {
+        logDebug("no normal client no reply");
+        return CABINET_OK; 
+    }
     logDebug("protocol stream send \nbuf[\n%s]\n buf_len[%d]", 
             this->protocolStream.getSendBuf().c_str(), 
             this->protocolStream.getSendBufLen());

@@ -4,16 +4,19 @@
 /*****************************************************************************/
 #define SERVER_ID 1
 #define CABINET_PORT 8080
+const bool PF = true;
 /*****************************************************************************/
 
 #include "CommandKeeper.h"
 #include "Client.h"
 #include "EventPoll.h"
 #include "DataBase.h"
+#include "PersistenceFile.h"
 class CommandKeeper;
 class Client;
 class EventPoll;
 class DataBase;
+class PersistenceFile;
 
 class Server
 {
@@ -26,6 +29,7 @@ public :
     int getListenFd() const {return this->listenFd;}
     int getConnectFd();
     void onFire() const;
+    int importPF();
     ~Server();
 
 private:
@@ -36,6 +40,7 @@ private:
     CommandKeeper *commandKeeperPtr;
     EventPoll *eventPoll;
     DataBase *db;
+    PersistenceFile *pf;
 };
 
 #endif

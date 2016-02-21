@@ -2,9 +2,9 @@
 #include "Util.h"
 #include <fstream>
 #include <cstdio>
+#include <iostream>
 
 using std::ofstream;
-
 
 void Log::fatal(const char *fileName, const int line, const char *format, ...) {
     va_list args;

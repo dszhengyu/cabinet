@@ -117,11 +117,13 @@ int EventPoll::processEvent() {
             if ((eventFd == this->server->getListenFd()) && (eventType & EPOLLIN)) {
                 logDebug("event poll listen fd readable");
                 int connectFd = 0;
-                if ((connectFd = this->server->getConnectFd()) == CABINET_ERR) {
+                string ip;
+                int port = 0;
+                if ((connectFd = this->server->getConnectFd(ip, port)) == CABINET_ERR) {
                     logWarning("get connect fd error");
                     continue;
                 }
-                Client *newClient = this->server->createClient(connectFd);
+                Client *newClient = this->server->createClient(connectFd, ip, port);
                 this->createFileEvent(newClient, READ_EVENT);
                 continue;
             }

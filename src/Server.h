@@ -12,11 +12,14 @@ const bool PF = true;
 #include "EventPoll.h"
 #include "DataBase.h"
 #include "PersistenceFile.h"
+#include <string>
 class CommandKeeper;
 class Client;
 class EventPoll;
 class DataBase;
 class PersistenceFile;
+
+using std::string;
 
 class Server
 {
@@ -24,10 +27,10 @@ public :
     Server();
     void initConfig();
     void init();
-    Client *createClient(int connectFd);
+    Client *createClient(const int connectFd, const string &ip, const int port);
     int listenOnPort();
     int getListenFd() const {return this->listenFd;}
-    int getConnectFd();
+    int getConnectFd(string &ip, int &port);
     void onFire() const;
     int importPF();
     ~Server();

@@ -22,10 +22,8 @@ Server::Server() :
 } 
 
 void Server::initConfig() {
-    serverId = SERVER_ID;
-    port = CABINET_PORT;
-
-    //to-do print conf to log
+    this->serverId = SERVER_ID;
+    this->port = CABINET_PORT;
 }
 
 void Server::init() {
@@ -53,12 +51,16 @@ void Server::init() {
         this->importPF();
     }
     logNotice("init server done");
+    #include "CabinetLogo.h"
+    logNotice(cabinet_server_logo, this->port, ((PF == true) ? "enabled" : "disabled"));
 }
 
-Client *Server::createClient(int connectFd) {
-    Client * client = new Client(this->clientIdMax, this->commandKeeperPtr, connectFd, this->eventPoll, this->db, this->pf);
+Client *Server::createClient(const int connectFd, const string &ip, const int port) {
+    Client * client = new Client(this->clientIdMax, this->commandKeeperPtr, connectFd, ip, port,
+            this->eventPoll, this->db, this->pf);
     ++this->clientIdMax;
-    logNotice("create client, client_id[%d], client_connect_fd[%d]", client->getClientId(), connectFd);
+    logNotice("create client, client_id[%d], client_connect_fd[%d] client_ip[%s]", 
+            client->getClientId(), connectFd, client->getIp().c_str());
     return client;
 }
 
@@ -100,7 +102,7 @@ int Server::listenOnPort() {
  * brief: 获取客户端连接
  *      成功返回描述符, 失败且不是因为非阻塞原因失败, 打印日志, 返回错误
  */
-int Server::getConnectFd() {
+int Server::getConnectFd(string &strIP, int &port) {
     logDebug("server get client connect");
     //获取tcp/ipv4连接
     struct sockaddr_in clientAddr;
@@ -122,7 +124,7 @@ int Server::getConnectFd() {
     //获取client连接信息
     char ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &clientAddr.sin_addr, ip, INET_ADDRSTRLEN);
-    int port = ntohs(clientAddr.sin_port);
+    strIP = ip;
 
     logNotice("receive client connect, client_ip[%s], client_port[%d]", ip, port);
 
@@ -140,7 +142,7 @@ void Server::onFire() const {
 int Server::importPF() {
     logNotice("start import persistence file");
     //create a client, set client category
-    Client *pFClient = this->createClient(-1);
+    Client *pFClient = this->createClient(-1, string(), -1);
     pFClient->setCategory(Client::LOCAL_PF_CLIENT);
 
     //init read pf

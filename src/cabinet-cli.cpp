@@ -1,10 +1,13 @@
 #include "CabinetCli.h"
 #include "Const.h"
 #include <cstdlib>
+#include <signal.h>
+
+CabinetCli *cabinetCli = nullptr;
+void *processContinue(int sigo);
 
 int main(int argc, char *argv[])
 {
-    CabinetCli *cabinetCli = nullptr;
     if (argc == 1) {
         cabinetCli = new CabinetCli();
     }
@@ -16,6 +19,10 @@ int main(int argc, char *argv[])
     }
 
     if (cabinetCli->connectServer() == CABINET_ERR) {
+        exit(1);
+    }
+
+    if (signal(SIGCONT, (__sighandler_t)processContinue) == SIG_ERR) {
         exit(1);
     }
 
@@ -38,4 +45,9 @@ int main(int argc, char *argv[])
     }
 
     return 0;
+}
+
+void *processContinue(int signo) {
+    cabinetCli->printPrompt();
+    return NULL;
 }

@@ -7,41 +7,25 @@
 const bool PF = true;
 /*****************************************************************************/
 
-#include "CommandKeeper.h"
-#include "Client.h"
-#include "EventPoll.h"
+#include "Cabinet.h"
 #include "DataBase.h"
 #include "PersistenceFile.h"
-#include <string>
-class CommandKeeper;
-class Client;
-class EventPoll;
+class Cabinet;
 class DataBase;
 class PersistenceFile;
 
-using std::string;
-
-class Server
+class Server: public Cabinet
 {
 public :
     Server();
     void initConfig();
     void init();
     Client *createClient(const int connectFd, const string &ip, const int port);
-    int listenOnPort();
-    int getListenFd() const {return this->listenFd;}
-    int getConnectFd(string &ip, int &port);
-    void onFire() const;
     int importPF();
     ~Server();
 
 private:
     long serverId;
-    long clientIdMax;
-    int port;
-    int listenFd;
-    CommandKeeper *commandKeeperPtr;
-    EventPoll *eventPoll;
     DataBase *db;
     PersistenceFile *pf;
 };

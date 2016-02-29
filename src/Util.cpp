@@ -1,6 +1,12 @@
 #include "Util.h"
+#include "Log.h"
 #include <fcntl.h>
 #include <ctime>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <cstring>
 
 string Util::getCurrentTime() {
     time_t timer = 0;
@@ -24,3 +30,67 @@ int Util::setNonBlock(int fd) {
     }   
     return CABINET_OK;
 }
+
+int Util::listenTcp(int port) {
+    int listenfd;
+    struct sockaddr_in serverAddr;
+
+    if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        logFatal("create socket fail!");
+        return CABINET_ERR;
+    }   
+
+    bzero(&serverAddr, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddr.sin_port = htons(port);
+
+    if (bind(listenfd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
+        logFatal("bind error!");
+        return CABINET_ERR;
+    }   
+
+    if (listen(listenfd, 5)< 0) {
+        logFatal("listen port error!");
+        return CABINET_ERR;
+    }
+    
+    if (Util::setNonBlock(listenfd) == CABINET_ERR) {
+        logFatal("set listen fd non-bolck error!");
+        return CABINET_ERR;
+    }
+
+    logNotice("listening on port %d", port);
+    return listenfd;
+}
+
+int Util::acceptTcp(const int listenfd, string &strIP, int &port) {
+    //获取tcp/ipv4连接
+    struct sockaddr_in clientAddr;
+    socklen_t clientAddrLen = sizeof(clientAddr);
+    int connectFd;
+    if ((connectFd = accept(listenfd, (struct sockaddr *)&clientAddr, &clientAddrLen)) < 0) {
+        if (errno != EWOULDBLOCK) {
+            logWarning("accept connect error");
+        }
+        return CABINET_ERR;
+    }
+
+    if (Util::setNonBlock(connectFd) == CABINET_ERR) {
+        logWarning("set connect fd non-bolck error!");
+        close(connectFd);
+        return CABINET_ERR;
+    }
+
+    //获取client连接信息
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &clientAddr.sin_addr, ip, INET_ADDRSTRLEN);
+    strIP = ip;
+
+    return connectFd;
+}
+
+int Util::connectTcp(const char *ip, int port) {
+    return CABINET_ERR;
+}
+

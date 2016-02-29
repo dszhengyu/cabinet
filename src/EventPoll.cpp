@@ -3,8 +3,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-EventPoll::EventPoll(Server *server):
-    server(server),
+EventPoll::EventPoll(Cabinet *cabinet):
+    cabinet(cabinet),
     readFileEventMap(),
     writeFileEventMap()
 {
@@ -114,16 +114,16 @@ int EventPoll::processEvent() {
             //1. 获取连接套接字
             //2. 创建client
             //3. 将client监听可读加入eventpoll
-            if ((eventFd == this->server->getListenFd()) && (eventType & EPOLLIN)) {
+            if ((eventFd == this->cabinet->getListenFd()) && (eventType & EPOLLIN)) {
                 logDebug("event poll listen fd readable");
                 int connectFd = 0;
                 string ip;
                 int port = 0;
-                if ((connectFd = this->server->getConnectFd(ip, port)) == CABINET_ERR) {
+                if ((connectFd = this->cabinet->getConnectFd(ip, port)) == CABINET_ERR) {
                     logWarning("get connect fd error");
                     continue;
                 }
-                Client *newClient = this->server->createClient(connectFd, ip, port);
+                Client *newClient = this->cabinet->createClient(connectFd, ip, port);
                 this->createFileEvent(newClient, READ_EVENT);
                 continue;
             }

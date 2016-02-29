@@ -2,6 +2,7 @@
 #include "Log.h"
 #include "DataBase.h"
 #include "StringObj.h"
+#include "ServerClient.h"
 
 #ifdef CABINET_SERVER
 /*
@@ -12,6 +13,7 @@
  *
  */
 int GetCommand::operator()(Client *client) const {
+    ServerClient *serverClient = (ServerClient *)client;
     //check user resolved input
     const vector<string> &argv = client->getReceiveArgv();
     if (argv.size() != (unsigned int)(this->commandArgc() + 1)) {
@@ -23,7 +25,7 @@ int GetCommand::operator()(Client *client) const {
 
     const string &keyName = argv[1];
     //check key exist
-    DataBase *db = client->getDataBase();
+    DataBase *db = serverClient->getDataBase();
     ValueObj *value = nullptr;
     if ((value = db->getValue(keyName)) == nullptr) {
         logDebug("get no-exist key, key[%s]", keyName.c_str());

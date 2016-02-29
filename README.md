@@ -14,9 +14,9 @@
 进度: v3.0基本设计完成    
 接下来任务: 重构代码    
 重构内容:    
-1. 提取Client父类    
-2. 提取Cabinet父类    
-3. 适当修改EventPoll类, 支持新的类结构    
+1. 提取Client父类 --done        
+2. 提取Cabinet父类 --done    
+3. 适当修改EventPoll类, 支持新的类结构 --done     
 4. 写一点Util的内容    
 重构之后, 开火!    
 

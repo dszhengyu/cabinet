@@ -4,17 +4,16 @@
 
 
 Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, const string &ip, const int port,
-        EventPoll *eventPoll, DataBase *dataBasePtr, PersistenceFile *pf):
+        EventPoll *eventPoll, PersistenceFile *pf):
     clientId(clientId),
     commandKeeper(commandKeeper),
     fd(fd),
     ip(ip),
     port(port),
     eventPoll(eventPoll),
-    dataBasePtr(dataBasePtr),
     protocolStream(true),
-    category(Client::NORMAL_CLIENT),
-    pf(pf)
+    pf(pf),
+    category(Client::NORMAL_CLIENT)
 {
 
 }
@@ -53,30 +52,6 @@ int Client::resolveReceiveBuf() {
     if (this->protocolStream.resolveReceiveBuf() == CABINET_ERR) {
         logWarning("client client_id[%d] input format error, input_buf[%s]", 
                 this->getClientId(), this->protocolStream.getReceiveBuf());
-        return CABINET_ERR;
-    }
-    return CABINET_OK;
-}
-
-/* 
- * brief: 当输入缓冲区中当前命令解析完毕时调用
- * pf: when it is not a pf client and pf is require, pf need pf command
- *
- */
-int Client::executeCommand() {
-    const string &commandName = this->protocolStream.getCommandName();
-    Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
-
-    //do pf
-    if ((this->category != Client::LOCAL_PF_CLIENT) && 
-            (pf != nullptr) &&
-            (selectedCommand.needPF() == true)) {
-        this->pf->appendToPF(this);
-    }
-
-    //execute
-    if (selectedCommand(this) == CABINET_ERR) {
-        logWarning("client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
     }
     return CABINET_OK;

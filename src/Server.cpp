@@ -1,14 +1,14 @@
 #include "Server.h"
 #include "Util.h"
-#include "Const.h"
+#include "ServerClient.h"
 #include <cstring>
 #include <cstdlib>
 #include <unistd.h>
 
 Server::Server() :
+    Cabinet(),
     serverId(-1),
-    db(nullptr),
-    pf(nullptr)
+    db(nullptr)
 {
 
 } 
@@ -48,8 +48,8 @@ void Server::init() {
 }
 
 Client *Server::createClient(const int connectFd, const string &ip, const int port) {
-    Client * client = new Client(this->clientIdMax, this->commandKeeperPtr, connectFd, ip, port,
-            this->eventPoll, this->db, this->pf);
+    Client * client = new ServerClient(this->clientIdMax, this->commandKeeperPtr, connectFd, ip, port,
+            this->eventPoll, this->pf, this->db);
     ++this->clientIdMax;
     logNotice("create client, client_id[%d], client_connect_fd[%d] client_ip[%s]", 
             client->getClientId(), connectFd, client->getIp().c_str());

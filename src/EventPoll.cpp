@@ -99,9 +99,14 @@ int EventPoll::fileEventOperation(int fd, int eventType, int opType) {
 
 int EventPoll::processEvent() {
     while (1) {
+        //do cabinet time event
+        this->cabinet->cron();
+        int timeout = this->cabinet->nextCronTime();
+
+        //do file event
         struct epoll_event events[this->EPOLL_SIZE];
         logDebug("###epoll wait");
-        int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, -1);
+        int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, timeout);
         logDebug("###event comes~ event_number[%d]", eventNumber);
         if (eventNumber == 0) {
             continue;
@@ -187,6 +192,7 @@ int EventPoll::processEvent() {
 
 int EventPoll::deleteClient(Client *client) {
     logWarning("event poll delete client client_id[%d]", client->getClientId());
+    this->cabinet->deleteClient(client);
     this->removeFileEvent(client, READ_EVENT);
     this->removeFileEvent(client, WRITE_EVENT);
     delete client;

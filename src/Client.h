@@ -5,13 +5,11 @@
 #include <string>
 #include "CommandKeeper.h"
 #include "EventPoll.h"
-#include "DataBase.h"
 #include "ProtocolStream.h"
 #include "PersistenceFile.h"
 
 class CommandKeeper;
 class EventPoll;
-class DataBase;
 class ProtocolStream;
 class PersistenceFile;
 
@@ -21,40 +19,44 @@ class Client
 {
 public:
     Client(long clientId, CommandKeeper *commandKeeper, int fd, const string &ip, const int port, 
-            EventPoll *eventPoll, DataBase *dataBasePtr, PersistenceFile *pf);
+            EventPoll *eventPoll, PersistenceFile *pf);
     long getClientId() const {return this->clientId;}
+    const string &getIp() const {return this->ip;}
+    int getClientFd() const {return this->fd;}
+
+    //protocolstream proxy method
     int fillReceiveBuf();
     int fillReceiveBuf(const string &str);
     int resolveReceiveBuf();
     const vector<string> &getReceiveArgv() const {return this->protocolStream.getReceiveArgv();}
-    int executeCommand();
+    const string &getCurCommandBuf() const {return this->protocolStream.getCurCommandBuf();}
+    bool isReceiveComplete() const {return this->protocolStream.isReceiveComplete();}
     int sendReply();
     int initReplyHead(int argc);
     int appendReplyBody(const string &);
     int appendReplyBody(const char *);
-    int getClientFd() const {return this->fd;}
-    bool isReceiveComplete() const {return this->protocolStream.isReceiveComplete();}
-    DataBase *getDataBase() const {return this->dataBasePtr;}
+
+    //category relative
     char getCategory() const {return this->category;}
     void setCategory(const char newCategory) {this->category = newCategory;}
-    const string &getCurCommandBuf() const {return this->protocolStream.getCurCommandBuf();}
-    int resetClient();
-    const string &getIp() const {return this->ip;}
-    ~Client();
     static const char NORMAL_CLIENT = '\0';
     static const char LOCAL_PF_CLIENT = 'L';
 
-private:
+    int resetClient();
+    virtual int executeCommand() = 0;
+    virtual ~Client();
+
+protected:
     long clientId;
     CommandKeeper *commandKeeper;
     int fd;
     string ip;
     int port;
     EventPoll *eventPoll;
-    DataBase *dataBasePtr;
     ProtocolStream protocolStream;
-    const int READ_MAX_LEN = 1024 * 16;
-    char category;
     PersistenceFile *pf;
+    char category;
+    const int READ_MAX_LEN = 1024 * 16;
+
 };
 #endif

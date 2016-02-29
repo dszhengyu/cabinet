@@ -1,6 +1,7 @@
 #include "SetCommand.h"
 #include "Log.h"
 #include "StringObj.h"
+#include "ServerClient.h"
 
 #ifdef CABINET_SERVER
 /*
@@ -12,6 +13,7 @@
  *
  */
 int SetCommand::operator()(Client *client) const {
+    ServerClient *serverClient = (ServerClient *)client;
     //check user resolved input
     const vector<string> &argv = client->getReceiveArgv();
     if (argv.size() != (unsigned int)(this->commandArgc() + 1)) {
@@ -24,7 +26,7 @@ int SetCommand::operator()(Client *client) const {
     const string &keyName = argv[1];
     const string &newValue = argv[2];
     //check key existence
-    DataBase *db = client->getDataBase();
+    DataBase *db = serverClient->getDataBase();
     ValueObj *value = nullptr;
     //1. key exist
     if ((value = db->getValue(keyName)) != nullptr) {

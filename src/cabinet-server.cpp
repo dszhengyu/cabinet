@@ -1,4 +1,5 @@
 #include "Server.h"
+#include "Log.h"
 
 int main () 
 {

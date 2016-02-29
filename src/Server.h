@@ -9,10 +9,9 @@ const bool PF = true;
 
 #include "Cabinet.h"
 #include "DataBase.h"
-#include "PersistenceFile.h"
+#include "Const.h"
 class Cabinet;
 class DataBase;
-class PersistenceFile;
 
 class Server: public Cabinet
 {
@@ -21,13 +20,15 @@ public :
     void initConfig();
     void init();
     Client *createClient(const int connectFd, const string &ip, const int port);
+    int deleteClient(Client *client) {return CABINET_OK;}
+    int cron() {return CABINET_OK;}
+    int nextCronTime() {return -1;}
     int importPF();
     ~Server();
 
 private:
     long serverId;
     DataBase *db;
-    PersistenceFile *pf;
 };
 
 #endif

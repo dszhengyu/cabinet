@@ -9,7 +9,8 @@ Cabinet::Cabinet() :
     port(-1),
     listenFd(-1),
     commandKeeperPtr(nullptr),
-    eventPoll(nullptr)
+    eventPoll(nullptr),
+    pf(nullptr)
 {
 
 } 

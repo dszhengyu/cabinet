@@ -41,6 +41,8 @@ public:
     void setCategory(const char newCategory) {this->category = newCategory;}
     static const char NORMAL_CLIENT = '\0';
     static const char LOCAL_PF_CLIENT = 'L';
+    static const char CLUSTER_CLIENT = 'C';
+    static const char SERVER_CLIENT = 'S';
 
     int resetClient();
     virtual int executeCommand() = 0;

@@ -1,4 +1,14 @@
 const char *cabinet_server_logo = 
+"\n__________\n"
+"|        |\n"   
+"|        |\n"   
+"|        |\n"   
+"|     || |    Cabinet-server\n"   
+"|        |    Port: %d\n"   
+"|        |    Persistence: %s\n"   
+"+________+\n";
+
+const char *cabinet_cluster_logo = 
 "\n____________________________\n"
 "|        |        |        |\n"   
 "|        |        |        |\n"   

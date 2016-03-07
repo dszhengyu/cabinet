@@ -1,5 +1,7 @@
 #include "CabinetCli.h"
 #include "Const.h"
+#include "Configuration.h"
+#include <string>
 #include <cstdlib>
 #include <signal.h>
 
@@ -8,11 +10,19 @@ void *processContinue(int sigo);
 
 int main(int argc, char *argv[])
 {
+    Configuration conf;
+    if (conf.loadConfiguration() == CABINET_ERR) {
+        logFatal("load conf error, exit");
+        exit(1);
+    }
+    const char *defaultServerIP = conf["CLI_SERVER_IP"].c_str();
+    const int defaultServerPort = std::stoi(conf["CLI_SERVER_PORT"]);
+
     if (argc == 1) {
-        cabinetCli = new CabinetCli();
+        cabinetCli = new CabinetCli(defaultServerIP, defaultServerPort);
     }
     else if (argc == 2) {
-        cabinetCli = new CabinetCli(atoi(argv[1]));
+        cabinetCli = new CabinetCli(defaultServerIP, atoi(argv[1]));
     }
     else if (argc == 3) {
         cabinetCli = new CabinetCli(argv[1], atoi(argv[2]));

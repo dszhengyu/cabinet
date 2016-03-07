@@ -1,9 +1,6 @@
 #ifndef CABINETCLI_H
 #define CABINETCLI_H
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 8080
-
 #include <string>
 #include <vector>
 #include "ProtocolStream.h"
@@ -15,8 +12,6 @@ using std::vector;
 class CabinetCli
 {
 public:
-    CabinetCli();
-    CabinetCli(int serverPort);
     CabinetCli(const char *serverIp, int serverPort);
     int readClientInput();
     int formatClientInput();

@@ -1,6 +1,7 @@
 #include "Server.h"
 #include "Util.h"
 #include "ServerClient.h"
+#include "Configuration.h"
 #include <cstring>
 #include <cstdlib>
 #include <unistd.h>
@@ -14,8 +15,13 @@ Server::Server() :
 } 
 
 void Server::initConfig() {
-    this->serverId = SERVER_ID;
-    this->port = CABINET_PORT;
+    Configuration conf;
+    if (conf.loadConfiguration() == CABINET_ERR) {
+        logFatal("load conf error, exit");
+        exit(1);
+    }
+    this->serverId = std::stoi(conf["SERVER_ID"]);
+    this->port = std::stoi(conf["SERVER_PORT"]);;
 }
 
 void Server::init() {

@@ -1,11 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-/*****************************************************************************/
-#define SERVER_ID 1
-#define CABINET_PORT 8080
 const bool PF = true;
-/*****************************************************************************/
 
 #include "Cabinet.h"
 #include "DataBase.h"

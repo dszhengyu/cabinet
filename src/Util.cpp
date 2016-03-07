@@ -1,12 +1,15 @@
 #include "Util.h"
 #include "Log.h"
+#include "Const.h"
 #include <fcntl.h>
+#include <stdlib.h>
 #include <ctime>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <sys/time.h>
 
 string Util::getCurrentTime() {
     time_t timer = 0;
@@ -14,6 +17,15 @@ string Util::getCurrentTime() {
     string timeStr(ctime(&timer));
     timeStr.replace(timeStr.end() - 1, timeStr.end(), ": ");
     return timeStr;
+}
+
+long Util::getCurrentTimeInMs() {
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL) == -1) {
+        return CABINET_ERR;
+    }
+    long timeInMs = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    return timeInMs;
 }
 
 int Util::setNonBlock(int fd) {
@@ -94,3 +106,37 @@ int Util::connectTcp(const char *ip, int port) {
     return CABINET_ERR;
 }
 
+int Util::daemonize() {
+    int pid1 = -1;
+    if ((pid1 = fork()) < 0) {
+        logWarning("fork first time error");
+        return CABINET_ERR;
+    }
+    else if (pid1 > 0) {
+        logDebug("first parent exit");
+        exit(0);
+    }
+    setsid();
+
+    int pid2 = -1;
+    if ((pid2 = fork()) < 0) {
+        logWarning("fork second time error");
+        return CABINET_ERR;
+    }
+    else if (pid2 > 0) {
+        logDebug("second parent exit");
+        exit(0);
+    }
+
+    int fd;
+    if ((fd = open("/dev/null", O_RDWR, 0)) != -1) {
+        dup2(fd, STDIN_FILENO);
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+        if (fd > STDERR_FILENO) {
+            close(fd);
+        }
+    }
+    logNotice("daemonize done. pid[%d]", getpid());
+    return CABINET_OK;
+}

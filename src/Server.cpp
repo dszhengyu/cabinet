@@ -25,6 +25,11 @@ void Server::initConfig() {
 }
 
 void Server::init() {
+    if (Util::daemonize() == CABINET_ERR) {
+        logFatal("daemonize fail, exit");
+        exit(1);
+    }
+
     this->commandKeeperPtr = new CommandKeeper();
     this->commandKeeperPtr->createServerCommandMap();
 

@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <unistd.h>
+#include <exception>
 
 Server::Server() :
     Cabinet(),
@@ -20,8 +21,13 @@ void Server::initConfig() {
         logFatal("load conf error, exit");
         exit(1);
     }
-    this->serverId = std::stoi(conf["SERVER_ID"]);
-    this->port = std::stoi(conf["SERVER_PORT"]);;
+    try{
+        this->serverId = std::stoi(conf["SERVER_ID"]);
+        this->port = std::stoi(conf["SERVER_PORT"]);;
+    } catch (std::exception &e) {
+        logFatal("read conf fail, receive exception, what[%s]", e.what());
+        exit(1);
+    }
 }
 
 void Server::init() {

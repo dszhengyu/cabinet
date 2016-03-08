@@ -10,6 +10,11 @@ CommandKeeper::CommandKeeper() :
 
 }
 
+void CommandKeeper::createClusterCommandMap() {
+    logNotice("create cluster command map");
+    commandMap["nomatch"] = new NoMatchCommand();
+}
+
 void CommandKeeper::createServerCommandMap() {
     logNotice("create server command map");
     commandMap["get"] = new GetCommand();

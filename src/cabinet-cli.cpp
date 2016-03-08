@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdlib>
 #include <signal.h>
+#include <exception>
 
 CabinetCli *cabinetCli = nullptr;
 void *processContinue(int sigo);
@@ -15,8 +16,16 @@ int main(int argc, char *argv[])
         logFatal("load conf error, exit");
         exit(1);
     }
-    const char *defaultServerIP = conf["CLI_SERVER_IP"].c_str();
-    const int defaultServerPort = std::stoi(conf["CLI_SERVER_PORT"]);
+    std::string defaultServerIPStr;
+    int defaultServerPort = -1;
+    try{
+        defaultServerIPStr = conf["CLI_SERVER_IP"];
+        defaultServerPort = std::stoi(conf["CLI_SERVER_PORT"]);
+    } catch (std::exception &e) {
+        logFatal("read conf fail, receive exception, what[%s]", e.what());
+        exit(1);
+    }
+    const char *defaultServerIP = defaultServerIPStr.c_str();
 
     if (argc == 1) {
         cabinetCli = new CabinetCli(defaultServerIP, defaultServerPort);

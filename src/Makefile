@@ -1,28 +1,39 @@
 #Final Target
-CABINET_FINAL_TARGET=$(CABINET_SERVER_NAME) $(CABINET_CLIENT_NAME)
+CABINET_FINAL_TARGET=$(CABINET_CLUSTER_NAME) $(CABINET_SERVER_NAME) $(CABINET_CLIENT_NAME)
+CABINET_CLUSTER_NAME=cabinet-cluster
 CABINET_SERVER_NAME=cabinet-server
 CABINET_CLIENT_NAME=cabinet-cli
 
 #Common Dependency
 CABINET_COMMAND_OBJECT=GetCommand.o SetCommand.o DelCommand.o NoMatchCommand.o CommandKeeper.o 
+CABINET_CLUSTER_COMMAND_OBJECT=
 CABINET_COMMON_HEADER=Command.h Const.h ValueObj.h CabinetLogo.h Cabinet.h Client.h
 CABINET_COMMON_OBJECT=Log.o Util.o ProtocolStream.o Configuration.o $(CABINET_COMMAND_OBJECT)
 CABINET_DATABASE_OBJECT=DataBase.o StringObj.o
 
 #Target Dependency
+CABINET_CLUSTER_OBJECT=cabinet-cluster.o Cabinet.o Cluster.o Client.o  EventPoll.o PersistenceFile.o \
+					   Siblings.o Children.o Parents.o \
+						$(CABINET_COMMON_OBJECT)
 CABINET_SERVER_OBJECT=cabinet-server.o Cabinet.o Server.o Client.o ServerClient.o EventPoll.o PersistenceFile.o \
 						$(CABINET_COMMON_OBJECT) $(CABINET_DATABASE_OBJECT)
 CABINET_CLIENT_OBJECT=cabinet-cli.o CabinetCli.o $(CABINET_COMMON_OBJECT)
 
 #Compile Arguements
+CABINET_CLUSTER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_CLUSTER
 CABINET_SERVER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_SERVER
 CABINET_CLIENT_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_CLIENT
 CXX=g++
 
 .PHONY: all
 all:
+	$(MAKE) $(CABINET_CLUSTER_NAME) CXXFLAGS="$(CABINET_CLUSTER_CXXFLAGS)"
 	$(MAKE) $(CABINET_SERVER_NAME) CXXFLAGS="$(CABINET_SERVER_CXXFLAGS)"
 	$(MAKE) $(CABINET_CLIENT_NAME) CXXFLAGS="$(CABINET_CLIENT_CXXFLAGS)"
+
+$(CABINET_CLUSTER_NAME): $(CABINET_CLUSTER_OBJECT)
+	$(CXX) -o $@ $^ $(CXXFLAGS)
+	@-rm -f $(CABINET_COMMAND_OBJECT)
 
 $(CABINET_SERVER_NAME): $(CABINET_SERVER_OBJECT)
 	$(CXX) -o $@ $^ $(CXXFLAGS)

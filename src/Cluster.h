@@ -38,6 +38,7 @@ private:
     Siblings *siblings;
     Children *children;
     Parents *parents;
+    bool meetWorkingBaseline;
 
     static const char LEADER = 'L';
     static const char FOLLOWER = 'F';

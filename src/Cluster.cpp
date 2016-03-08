@@ -15,7 +15,8 @@ Cluster::Cluster():
     lastApplied(0),
     siblings(nullptr),
     children(nullptr),
-    parents(nullptr)
+    parents(nullptr),
+    meetWorkingBaseline(false)
 {
 }
 

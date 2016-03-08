@@ -12,7 +12,7 @@ CABINET_COMMON_OBJECT=Log.o Util.o ProtocolStream.o Configuration.o $(CABINET_CO
 CABINET_DATABASE_OBJECT=DataBase.o StringObj.o
 
 #Target Dependency
-CABINET_CLUSTER_OBJECT=cabinet-cluster.o Cabinet.o Cluster.o Client.o  EventPoll.o PersistenceFile.o \
+CABINET_CLUSTER_OBJECT=cabinet-cluster.o Cabinet.o Cluster.o Client.o ClusterClient.o EventPoll.o PersistenceFile.o \
 					   Siblings.o Children.o Parents.o \
 						$(CABINET_COMMON_OBJECT)
 CABINET_SERVER_OBJECT=cabinet-server.o Cabinet.o Server.o Client.o ServerClient.o EventPoll.o PersistenceFile.o \

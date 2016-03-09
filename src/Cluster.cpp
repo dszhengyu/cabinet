@@ -16,7 +16,8 @@ Cluster::Cluster():
     siblings(nullptr),
     children(nullptr),
     parents(nullptr),
-    meetWorkingBaseline(false)
+    meetWorkingBaseline(false),
+    lastUnixTimeInMs(-1)
 {
 }
 
@@ -70,16 +71,55 @@ void Cluster::init() {
     }
 
     this->eventPoll->pollListenFd(this->getListenFd());
+
+    if (this->toFollow(1) == CABINET_ERR) {
+        logFatal("init cluster cluster_id[%d] to follow error", this->getClusterId());
+        exit(1);
+    }
 }
 
 Client *Cluster::createClient(const int connectFd, const string &ip, const int port) {
+    ClusterClient *newClient = new ClusterClient(this->clientIdMax, connectFd, ip, port, this);
 
-    return nullptr;
+    if (this->parents->addParents(newClient) == CABINET_ERR) {
+        logWarning("cluster cluster_id[%d] add cluster client to parents error", this->getClusterId());
+        return nullptr;
+    }
+
+    ++this->clientIdMax;
+    logNotice("cluster cluster_id[%d] create client, client_id[%d], client_connect_fd[%d] client_ip[%s]", 
+            this->getClusterId(), newClient->getClientId(), connectFd, newClient->getIp().c_str());
+    return (Client *)newClient;
 }
 
 int Cluster::deleteClient(Client *client) {
+    if (client->getCategory() == Client::NORMAL_CLIENT) {
+        if (this->parents->deleteParents((ClusterClient *)client) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] delete normal client error", this->getClusterId());
+            return CABINET_ERR;
+        }
+        logNotice("cluster cluster_id[%d] delete normal client", this->getClusterId());
+        return CABINET_OK;
+    }
+    if (client->getCategory() == Client::CLUSTER_CLIENT) {
+        if (this->siblings->deleteSiblings((ClusterClient *)client) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] delete cluster client error", this->getClusterId());
+            return CABINET_ERR;
+        }
+        logNotice("cluster cluster_id[%d] delete cluster client", this->getClusterId());
+        return CABINET_OK;
+    }
+    if (client->getCategory() == Client::SERVER_CLIENT) {
+        if (this->children->deleteChildren((ClusterClient *)client) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] delete server client error", this->getClusterId());
+            return CABINET_ERR;
+        }
+        logNotice("cluster cluster_id[%d] delete server client", this->getClusterId());
+        return CABINET_OK;
+    }
 
-    return CABINET_OK;
+    logFatal("cluster cluster_id[%d] can not delete unknown kind of client, broken, exit", this->getClusterId());
+    return CABINET_ERR;
 }
 
 int Cluster::cron() {
@@ -88,6 +128,55 @@ int Cluster::cron() {
 
 int Cluster::nextCronTime() {
     return -1;
+}
+
+/*
+ *brief: send first empty appendEntry(heartbeat) to all siblings
+ */
+int Cluster::toLead() {
+    logNotice("cluster cluster_id[%d] to lead", this->getClusterId());
+    this->setClusterRole(Cluster::LEADER);
+
+    vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
+    Command &firstAppendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
+    for (ClusterClient *sibling : onlineSiblings) {
+        if ((firstAppendEntryCommand >> sibling) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] first append entry to sibling error", this->getClusterId());
+            continue;
+        }
+    }
+
+    return CABINET_OK;
+}
+
+int Cluster::toFollow(long newTerm) {
+    logNotice("cluster cluster_id[%d] to follow", this->getClusterId());
+    this->setClusterRole(Cluster::FOLLOWER);
+
+    this->currentTerm = newTerm;
+    this->lastUnixTimeInMs = Util::getCurrentTimeInMs();
+    
+    return CABINET_OK;
+}
+
+int Cluster::toCandidate() {
+    logNotice("cluster cluster_id[%d] to candidate", this->getClusterId());
+    this->setClusterRole(Cluster::CANDIDATE);
+
+    ++this->currentTerm;
+    this->votedFor = this->getClusterId();
+    this->lastUnixTimeInMs = Util::getCurrentTimeInMs();
+
+    vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
+    Command &requestVoteCommand = this->commandKeeperPtr->selectCommand("requestvote");
+    for (ClusterClient *sibling : onlineSiblings) {
+        if ((requestVoteCommand >> sibling) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] request vote from sibling error", this->getClusterId());
+            continue;
+        }
+    }
+
+    return CABINET_OK;
 }
 
 Cluster::~Cluster()

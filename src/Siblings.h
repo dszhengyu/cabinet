@@ -15,6 +15,7 @@ public:
     int recognizeSiblings(const Configuration &conf);
     int addSiblings(ClusterClient *sibling);
     int deleteSiblings(ClusterClient *sibling);
+    vector<ClusterClient *> getOnlineSiblings();
 
 private:
     vector<int> clusterIdVector;

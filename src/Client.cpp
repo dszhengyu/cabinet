@@ -3,19 +3,17 @@
 #include <unistd.h>
 
 
-Client::Client(long clientId, CommandKeeper *commandKeeper, int fd, const string &ip, const int port,
-        EventPoll *eventPoll, PersistenceFile *pf):
+Client::Client(long clientId, int fd, const string &ip, const int port, Cabinet *cabinet):
     clientId(clientId),
-    commandKeeper(commandKeeper),
     fd(fd),
     ip(ip),
     port(port),
-    eventPoll(eventPoll),
     protocolStream(true),
-    pf(pf),
     category(Client::NORMAL_CLIENT)
 {
-
+    this->commandKeeper = cabinet->getCommandKeeper();
+    this->eventPoll = cabinet->getEventPoll();
+    this->pf = cabinet->getPersistenceFile();
 }
 
 /* 

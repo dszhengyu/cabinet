@@ -1,7 +1,7 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#ifdef CABINET_SERVER
+#ifdef CABINET
     #include "Client.h"
     class Client;
 #endif
@@ -12,8 +12,10 @@ class Command
 {
 public:
     Command(): calledTimes(0) {}
-#ifdef CABINET_SERVER
-    virtual int operator()(Client *client) const = 0;
+#ifdef CABINET
+    int operator>>(Client *client) {return CABINET_OK;}
+    int operator[](Client *client) {return CABINET_OK;}
+    int operator()(Client *client) {return CABINET_OK;}
 #endif
     virtual bool isCommandValid() const = 0;
     virtual int commandArgc() const = 0;

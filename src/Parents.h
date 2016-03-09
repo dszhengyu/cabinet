@@ -10,8 +10,8 @@ class Parents
 {
 public:
     Parents();
-    int addParents();
-    int deleteParents();
+    int addParents(ClusterClient *parents);
+    int deleteParents(ClusterClient *parents);
 private:
     deque<ClusterClient *> parentsQueue;
 

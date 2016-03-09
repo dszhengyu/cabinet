@@ -5,10 +5,10 @@ Parents::Parents()
 {
 }
 
-int Parents::addParents() {
+int Parents::addParents(ClusterClient *parents) {
     return CABINET_OK;
 }
 
-int Parents::deleteParents() {
+int Parents::deleteParents(ClusterClient *parents) {
     return CABINET_OK;
 }

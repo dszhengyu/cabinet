@@ -27,6 +27,9 @@ public:
     int listenOnPort();
     int getListenFd() const {return this->listenFd;}
     int getConnectFd(string &ip, int &port);
+    CommandKeeper *getCommandKeeper() const {return this->commandKeeperPtr;}
+    EventPoll *getEventPoll() const {return this->eventPoll;}
+    PersistenceFile *getPersistenceFile() const {return this->pf;}
     virtual ~Cabinet();
 
 protected:

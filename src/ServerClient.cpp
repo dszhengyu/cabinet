@@ -1,8 +1,7 @@
 #include "ServerClient.h"
 
-ServerClient::ServerClient(long clientId, CommandKeeper *commandKeeper, int fd, const string &ip, const int port, 
-            EventPoll *eventPoll, PersistenceFile *pf, DataBase *dataBasePtr) :
-    Client(clientId, commandKeeper, fd, ip, port, eventPoll, pf),
+ServerClient::ServerClient(long clientId, int fd, const string &ip, const int port, DataBase *dataBasePtr, Cabinet *cabinet) :
+    Client(clientId, fd, ip, port, cabinet),
     dataBasePtr(dataBasePtr)
 {
 

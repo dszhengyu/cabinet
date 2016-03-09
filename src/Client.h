@@ -3,11 +3,13 @@
 
 
 #include <string>
+#include "Cabinet.h"
 #include "CommandKeeper.h"
 #include "EventPoll.h"
 #include "ProtocolStream.h"
 #include "PersistenceFile.h"
 
+class Cabinet;
 class CommandKeeper;
 class EventPoll;
 class ProtocolStream;
@@ -18,8 +20,7 @@ using std::string;
 class Client
 {
 public:
-    Client(long clientId, CommandKeeper *commandKeeper, int fd, const string &ip, const int port, 
-            EventPoll *eventPoll, PersistenceFile *pf);
+    Client(long clientId, int fd, const string &ip, const int port, Cabinet *cabinet);
     long getClientId() const {return this->clientId;}
     const string &getIp() const {return this->ip;}
     int getClientFd() const {return this->fd;}

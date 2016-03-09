@@ -3,7 +3,7 @@
 #include "StringObj.h"
 #include "ServerClient.h"
 
-#ifdef CABINET_SERVER
+#ifdef CABINET
 /*
  *brief: 首先检查用户出入解析结果是否正确,
  *       检查数据空间中, 是否有对应的键

@@ -16,3 +16,14 @@ int Siblings::addSiblings(ClusterClient *sibling) {
 int Siblings::deleteSiblings(ClusterClient *sibling) {
     return CABINET_OK;
 }
+
+vector<ClusterClient *> Siblings::getOnlineSiblings() {
+    vector<ClusterClient *> siblingsVector;
+    for (int clusterId : this->clusterIdVector) {
+        if (this->connectStatus[clusterId] == true) {
+            siblingsVector.push_back(this->clusterIdClientPtrMap[clusterId]);
+            continue;
+        }
+    }
+    return siblingsVector;
+}

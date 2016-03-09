@@ -1,8 +1,8 @@
 #include "CommandKeeper.h"
+#include "NoMatchCommand.h"
 #include "GetCommand.h"
 #include "SetCommand.h"
 #include "DelCommand.h"
-#include "NoMatchCommand.h"
 
 CommandKeeper::CommandKeeper() :
     commandMap()

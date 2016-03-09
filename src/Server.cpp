@@ -65,8 +65,7 @@ void Server::init() {
 }
 
 Client *Server::createClient(const int connectFd, const string &ip, const int port) {
-    Client * client = new ServerClient(this->clientIdMax, this->commandKeeperPtr, connectFd, ip, port,
-            this->eventPoll, this->pf, this->db);
+    Client * client = new ServerClient(this->clientIdMax, connectFd, ip, port, this->db, this);
     ++this->clientIdMax;
     logNotice("create client, client_id[%d], client_connect_fd[%d] client_ip[%s]", 
             client->getClientId(), connectFd, client->getIp().c_str());

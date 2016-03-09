@@ -24,9 +24,12 @@ public:
     int nextCronTime();
 
     int toLead();
-    int toFollow();
+    int toFollow(long newTerm);
     int toCandidate();
 
+    int getClusterId() const {return this->clusterId;}
+    const char getClusterRole() const {return this->role;}
+    void setClusterRole(const char newRole) {this->role = newRole;}
     ~Cluster();
 private:
     int clusterId;
@@ -39,6 +42,7 @@ private:
     Children *children;
     Parents *parents;
     bool meetWorkingBaseline;
+    long lastUnixTimeInMs;
 
     static const char LEADER = 'L';
     static const char FOLLOWER = 'F';

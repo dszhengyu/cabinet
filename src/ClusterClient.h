@@ -7,6 +7,7 @@ class Cluster;
 class ClusterClient: public Client
 {
 public:
+    ClusterClient(long clientId, int fd, const string &ip, const int port, Cluster *cluster);
     int executeCommand();
     ~ClusterClient();
 

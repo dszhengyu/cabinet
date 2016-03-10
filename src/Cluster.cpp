@@ -17,7 +17,11 @@ Cluster::Cluster():
     children(nullptr),
     parents(nullptr),
     meetWorkingBaseline(false),
-    lastUnixTimeInMs(-1)
+    lastUnixTimeInMs(-1),
+    hz(10),
+    electionTimeout(100),
+    receiveVotes(0),
+    winVoteBaseline(0)
 {
 }
 
@@ -30,6 +34,9 @@ void Cluster::initConfig() {
     try{
         this->clusterId = std::stoi(conf["CLUSTER_ID"]);
         this->port = std::stoi(conf["CLUSTER_PORT"]);;
+        this->hz = std::stoi(conf["CLUSTER_HZ"]);
+        this->electionTimeout = std::stoi(conf["CLUSTER_ELECTION_TIMEOUT"]);
+        this->winVoteBaseline = std::stoi(conf["CLUSTER_TOTAL_NUMBER"]) / 2 + 1;
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());
         exit(1);
@@ -122,12 +129,101 @@ int Cluster::deleteClient(Client *client) {
     return CABINET_ERR;
 }
 
+/*
+ *brief: 1. 首先检查siblings和children是否连接正常
+ *          否, 则更改为follower状态, 连接服务器
+ *       2. 根据不同角色做不同的事情
+ */
 int Cluster::cron() {
+    //judge whether meet working baseline
+    this->meetWorkingBaseline = this->siblings->satisfyWorkingBaseling() && this->children->satisfyWorkingBaseling();
+    //reconnect if baseline not achieved
+    if (!this->meetWorkingBaseline) {
+        logWarning("cluster cluster_id[%d] could not meet working baseline", this->getClusterId());
+        if (this->toFollow(this->currentTerm) == CABINET_ERR) {
+            logFatal("cluster cluster_id[%d] change to follower error", this->getClusterId());
+            exit(1);
+        }
+        if (!this->siblings->satisfyWorkingBaseling()) {
+            if (this->siblings->connectLostSiblings() == CABINET_ERR) {
+                logFatal("cluster cluster_id[%d] connect lost siblings error", this->getClusterId());
+                exit(1);
+            }
+        }
+        if (!this->children->satisfyWorkingBaseling()) {
+            if (this->children->connectLostChildren() == CABINET_ERR) {
+                logFatal("cluster cluster_id[%d] connect lost children error", this->getClusterId());
+                exit(1);
+            }
+        }
+        return CABINET_OK;
+    }
+
+    //do thing each role should do
+    if (this->getClusterRole() == Cluster::LEADER) {
+        //append entry to sibilings
+        vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
+        Command &appendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
+        for (ClusterClient *sibling : onlineSiblings) {
+            if ((appendEntryCommand >> sibling) == CABINET_ERR) {
+                logWarning("cluster cluster_id[%d] append entry to sibling error", this->getClusterId());
+                continue;
+            }
+        }
+
+        //flush command to children
+        ClusterClient *children = this->children->getOnlineChildren();
+        Command &flushServerCommand = this->commandKeeperPtr->selectCommand("flushserver");
+        if ((flushServerCommand >> children) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] flush server error", this->getClusterId());
+        }
+        return CABINET_OK;
+    }
+
+    if (this->getClusterRole() == Cluster::FOLLOWER) {
+        long currentUnixTimeInMs = Util::getCurrentTimeInMs();
+        long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
+        if (gap > this->electionTimeout) {
+            logNotice("cluster cluster_id[%d] follower election timeout, change to candidate", this->getClusterId());
+            if (this->toCandidate() == CABINET_ERR) {
+                logFatal("cluster cluster_id[%d] to candidate error", this->getClusterId());
+                exit(1);
+            }
+            return CABINET_OK;
+        }
+        return CABINET_OK;
+    }
+
+    if (this->getClusterRole() == Cluster::CANDIDATE) {
+        long currentUnixTimeInMs = Util::getCurrentTimeInMs();
+        long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
+        if (gap > this->electionTimeout) {
+            //receive enough votes
+            if (this->receiveVotes >= this->winVoteBaseline) {
+                logNotice("cluster cluster_id[%d] candidate receive enough votes, change to leader", this->getClusterId());
+                if (this->toLead() == CABINET_ERR) {
+                    logFatal("cluster cluster_id[%d] to leader error", this->getClusterId());
+                    exit(1);
+                }
+                return CABINET_OK;
+            }
+
+            //not enough votes
+            logNotice("cluster cluster_id[%d] candidate election timeout, change to candidate", this->getClusterId());
+            if (this->toCandidate() == CABINET_ERR) {
+                logFatal("cluster cluster_id[%d] to candidate error", this->getClusterId());
+                exit(1);
+            }
+            return CABINET_OK;
+        }
+        return CABINET_OK;
+    }
+
     return CABINET_OK;
 }
 
 int Cluster::nextCronTime() {
-    return -1;
+    return 1000 / this->hz;
 }
 
 /*
@@ -165,6 +261,7 @@ int Cluster::toCandidate() {
 
     ++this->currentTerm;
     this->votedFor = this->getClusterId();
+    this->receiveVotes = 1;
     this->lastUnixTimeInMs = Util::getCurrentTimeInMs();
 
     vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();

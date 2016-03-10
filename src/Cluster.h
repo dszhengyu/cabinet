@@ -43,6 +43,10 @@ private:
     Parents *parents;
     bool meetWorkingBaseline;
     long lastUnixTimeInMs;
+    int hz;
+    int electionTimeout;
+    int receiveVotes;
+    int winVoteBaseline;
 
     static const char LEADER = 'L';
     static const char FOLLOWER = 'F';

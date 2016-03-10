@@ -1,10 +1,8 @@
 #ifndef CHILDREN_H
 #define CHILDREN_H
 
-#include "Cluster.h"
 #include "ClusterClient.h"
 #include "Configuration.h"
-class Cluster;
 class ClusterClient;
 class Configuration;
 
@@ -15,8 +13,12 @@ public:
     int recognizeChildren(const Configuration &conf);
     int addChildren(ClusterClient *child);
     int deleteChildren(ClusterClient *child);
+    bool satisfyWorkingBaseling() const;
+    int connectLostChildren();
+    ClusterClient *getOnlineChildren() const;
 private:
-    Cluster *cluster;
+    ClusterClient *child;
+    bool connectStatus;
 };
 #endif
 

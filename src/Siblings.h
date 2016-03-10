@@ -16,6 +16,8 @@ public:
     int addSiblings(ClusterClient *sibling);
     int deleteSiblings(ClusterClient *sibling);
     vector<ClusterClient *> getOnlineSiblings();
+    bool satisfyWorkingBaseling();
+    int connectLostSiblings();
 
 private:
     vector<int> clusterIdVector;

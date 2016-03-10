@@ -27,3 +27,15 @@ vector<ClusterClient *> Siblings::getOnlineSiblings() {
     }
     return siblingsVector;
 }
+
+bool Siblings::satisfyWorkingBaseling() {
+    bool finalVal = true;
+    for (int clusterId : this->clusterIdVector) {
+        finalVal &= this->connectStatus[clusterId];
+    }
+    return finalVal;
+}
+
+int Siblings::connectLostSiblings() {
+    return CABINET_OK;
+}

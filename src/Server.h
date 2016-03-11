@@ -1,49 +1,30 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-/*****************************************************************************/
-#define SERVER_ID 1
-#define CABINET_PORT 8080
 const bool PF = true;
-/*****************************************************************************/
 
-#include "CommandKeeper.h"
-#include "Client.h"
-#include "EventPoll.h"
+#include "Cabinet.h"
 #include "DataBase.h"
-#include "PersistenceFile.h"
-#include <string>
-class CommandKeeper;
-class Client;
-class EventPoll;
+#include "Const.h"
+class Cabinet;
 class DataBase;
-class PersistenceFile;
 
-using std::string;
-
-class Server
+class Server: public Cabinet
 {
 public :
     Server();
     void initConfig();
     void init();
     Client *createClient(const int connectFd, const string &ip, const int port);
-    int listenOnPort();
-    int getListenFd() const {return this->listenFd;}
-    int getConnectFd(string &ip, int &port);
-    void onFire() const;
+    int deleteClient(Client *client) {return CABINET_OK;}
+    int cron() {return CABINET_OK;}
+    int nextCronTime() {return -1;}
     int importPF();
     ~Server();
 
 private:
     long serverId;
-    long clientIdMax;
-    int port;
-    int listenFd;
-    CommandKeeper *commandKeeperPtr;
-    EventPoll *eventPoll;
     DataBase *db;
-    PersistenceFile *pf;
 };
 
 #endif

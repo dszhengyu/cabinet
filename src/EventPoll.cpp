@@ -3,8 +3,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-EventPoll::EventPoll(Server *server):
-    server(server),
+EventPoll::EventPoll(Cabinet *cabinet):
+    cabinet(cabinet),
     readFileEventMap(),
     writeFileEventMap()
 {
@@ -99,9 +99,14 @@ int EventPoll::fileEventOperation(int fd, int eventType, int opType) {
 
 int EventPoll::processEvent() {
     while (1) {
+        //do cabinet time event
+        this->cabinet->cron();
+        int timeout = this->cabinet->nextCronTime();
+
+        //do file event
         struct epoll_event events[this->EPOLL_SIZE];
         logDebug("###epoll wait");
-        int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, -1);
+        int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, timeout);
         logDebug("###event comes~ event_number[%d]", eventNumber);
         if (eventNumber == 0) {
             continue;
@@ -114,16 +119,16 @@ int EventPoll::processEvent() {
             //1. 获取连接套接字
             //2. 创建client
             //3. 将client监听可读加入eventpoll
-            if ((eventFd == this->server->getListenFd()) && (eventType & EPOLLIN)) {
+            if ((eventFd == this->cabinet->getListenFd()) && (eventType & EPOLLIN)) {
                 logDebug("event poll listen fd readable");
                 int connectFd = 0;
                 string ip;
                 int port = 0;
-                if ((connectFd = this->server->getConnectFd(ip, port)) == CABINET_ERR) {
+                if ((connectFd = this->cabinet->getConnectFd(ip, port)) == CABINET_ERR) {
                     logWarning("get connect fd error");
                     continue;
                 }
-                Client *newClient = this->server->createClient(connectFd, ip, port);
+                Client *newClient = this->cabinet->createClient(connectFd, ip, port);
                 this->createFileEvent(newClient, READ_EVENT);
                 continue;
             }
@@ -187,6 +192,7 @@ int EventPoll::processEvent() {
 
 int EventPoll::deleteClient(Client *client) {
     logWarning("event poll delete client client_id[%d]", client->getClientId());
+    this->cabinet->deleteClient(client);
     this->removeFileEvent(client, READ_EVENT);
     this->removeFileEvent(client, WRITE_EVENT);
     delete client;

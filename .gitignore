@@ -1,5 +1,6 @@
 src/*.o
 src/*.log
 src/*.pf
+src/cabinet-cluster
 src/cabinet-server
 src/cabinet-cli

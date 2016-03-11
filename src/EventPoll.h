@@ -1,11 +1,11 @@
 #ifndef EVENTPOLL_H
 #define EVENTPOLL_H
 
-#include "Server.h"
+#include "Cabinet.h"
 #include "Client.h"
 #include <string>
 #include <map>
-class Server;
+class Cabinet;
 class Client;
 
 using std::string;
@@ -15,7 +15,7 @@ class EventPoll
 {
 public :
     typedef map<int, Client *> fileeventmap_t;
-    EventPoll(Server *server);
+    EventPoll(Cabinet *cabinet);
     int initEventPoll();
     int createFileEvent(Client *client, int eventType);
     int removeFileEvent(Client *client, int eventType);
@@ -26,7 +26,7 @@ public :
 
 private:
     int fileEventOperation(int fd, int eventType, int opType);
-    Server *server;
+    Cabinet *cabinet;
     fileeventmap_t readFileEventMap;
     fileeventmap_t writeFileEventMap;
     int eventPollFd;

@@ -1,11 +1,12 @@
 #include "Server.h"
+#include "Log.h"
 
 int main () 
 {
-    Server server;
-    server.initConfig();
-    server.init();
-    server.onFire();
+    Cabinet *server = new Server();
+    server->initConfig();
+    server->init();
+    server->onFire();
 
     return 0;
 }

@@ -1,8 +1,8 @@
 #include "CommandKeeper.h"
+#include "NoMatchCommand.h"
 #include "GetCommand.h"
 #include "SetCommand.h"
 #include "DelCommand.h"
-#include "NoMatchCommand.h"
 
 CommandKeeper::CommandKeeper() :
     commandMap()
@@ -10,17 +10,21 @@ CommandKeeper::CommandKeeper() :
 
 }
 
+void CommandKeeper::createClusterCommandMap() {
+    logNotice("create cluster command map");
+    commandMap["nomatch"] = new NoMatchCommand();
+}
+
 void CommandKeeper::createServerCommandMap() {
     logNotice("create server command map");
-    this->createNormalCommandMap();
+    commandMap["get"] = new GetCommand();
+    commandMap["set"] = new SetCommand();
+    commandMap["del"] = new DelCommand();
+    commandMap["nomatch"] = new NoMatchCommand();
 }
 
 void CommandKeeper::createClientCommandMap() {
     logNotice("create client command map");
-    this->createNormalCommandMap();
-}
-
-void CommandKeeper::createNormalCommandMap() {
     commandMap["get"] = new GetCommand();
     commandMap["set"] = new SetCommand();
     commandMap["del"] = new DelCommand();

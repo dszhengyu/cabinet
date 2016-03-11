@@ -1,7 +1,7 @@
 #ifndef NOMATCHCOMMAND_H
 #define NOMATCHCOMMAND_H
 
-#ifdef CABINET_SERVER
+#ifdef CABINET
     #include "Client.h"
     class Client;
 #endif
@@ -12,7 +12,11 @@ class Command;
 class NoMatchCommand: public Command
 {
 public:
-#ifdef CABINET_SERVER
+#ifdef CABINET_CLUSTER
+    int operator>>(Client *client) {return 0;}
+    int operator[](Client *client) {return 0;}
+#endif
+#ifdef CABINET
     int operator()(Client *client) const;
 #endif
     bool isCommandValid() const {return false;}

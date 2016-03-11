@@ -16,12 +16,12 @@ class CommandKeeper
 public :
     typedef map<string, Command *> commandmap_t;
     CommandKeeper();
+    void createClusterCommandMap();
     void createServerCommandMap();
     void createClientCommandMap();
     Command &selectCommand(const string &commandName);
     ~CommandKeeper();
 private:
-    void createNormalCommandMap();
     commandmap_t commandMap;
 };
 

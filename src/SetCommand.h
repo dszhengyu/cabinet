@@ -1,7 +1,7 @@
 #ifndef SETCOMMAND_H
 #define SETCOMMAND_H
 
-#ifdef CABINET_SERVER
+#ifdef CABINET
     #include "Client.h"
     class Client;
 #endif
@@ -12,7 +12,7 @@ class Command;
 class SetCommand: public Command
 {
 public:
-#ifdef CABINET_SERVER
+#ifdef CABINET
     int operator()(Client *client) const;
 #endif
     bool isCommandValid() const {return true;}

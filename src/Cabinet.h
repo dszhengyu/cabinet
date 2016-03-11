@@ -19,7 +19,7 @@ public:
     Cabinet();
     virtual void initConfig() = 0;
     virtual void init() = 0;
-    virtual Client *createClient(const int connectFd, const string &ip, const int port) = 0;
+    virtual Client *createClient() = 0;
     virtual int deleteClient(Client *client) = 0;
     virtual int cron() = 0;
     virtual int nextCronTime() = 0;

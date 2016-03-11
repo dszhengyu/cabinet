@@ -7,15 +7,16 @@
 #endif
 
 #include "Const.h"
+#include "Log.h"
 
 class Command
 {
 public:
     Command(): calledTimes(0) {}
 #ifdef CABINET
-    int operator>>(Client *client) {return CABINET_OK;}
-    int operator[](Client *client) {return CABINET_OK;}
-    int operator()(Client *client) {return CABINET_OK;}
+    virtual int operator>>(Client *client) const {logDebug("should not use default command >>"); return CABINET_OK;}
+    virtual int operator[](Client *client) const {logDebug("should not use default command []"); return CABINET_OK;}
+    virtual int operator()(Client *client) const {logDebug("should not use default command ()"); return CABINET_OK;}
 #endif
     virtual bool isCommandValid() const = 0;
     virtual int commandArgc() const = 0;

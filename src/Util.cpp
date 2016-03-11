@@ -103,7 +103,32 @@ int Util::acceptTcp(const int listenfd, string &strIP, int &port) {
 }
 
 int Util::connectTcp(const char *ip, int port) {
-    return CABINET_ERR;
+    logNotice("connect tcp, IP[%s], port[%d]", ip, port);
+    int connectFd;
+    struct sockaddr_in clientAddr;
+    
+    if ((connectFd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        logWarning("Create Socket Error");
+        return CABINET_ERR;
+    }
+    //if (Util::setNonBlock(connectFd) == CABINET_ERR) {
+    //    logWarning("Set Connect Fd Non Block Error");
+    //    return CABINET_ERR;
+    //}
+
+    bzero(&clientAddr, sizeof(clientAddr));
+    clientAddr.sin_family = AF_INET;
+    clientAddr.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip, &clientAddr.sin_addr) <= 0) {
+        logWarning("Create Client Address Error");
+        return CABINET_ERR;
+    }
+    
+    if (connect(connectFd, (struct sockaddr *)&clientAddr, sizeof(clientAddr)) < 0) {
+        logWarning("Connect Server Error, IP[%s], port[%d]", ip, port);
+        return CABINET_ERR;
+    }
+    return connectFd;
 }
 
 int Util::daemonize() {

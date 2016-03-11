@@ -1,6 +1,7 @@
 #include "CabinetCli.h"
 #include "Const.h"
 #include "Log.h"
+#include "Util.h"
 #include <iostream>
 #include <stdlib.h>
 #include <strings.h>
@@ -36,23 +37,8 @@ void CabinetCli::printPrompt() {
 
 int CabinetCli::connectServer() {
     logDebug("cabinet cli connect server");
-    struct sockaddr_in clientAddr;
-    
-    if ((this->connectFd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        std::cout << "Create Socket Error" << std::endl;
-        exit(1);
-    }
-
-    bzero(&clientAddr, sizeof(clientAddr));
-    clientAddr.sin_family = AF_INET;
-    clientAddr.sin_port = htons(this->serverPort);
-    if (inet_pton(AF_INET, this->serverIp.c_str(), &clientAddr.sin_addr) <= 0) {
-        std::cout << "Create Client Address Error" << std::endl;
-        exit(1);
-    }
-    
-    if (connect(this->connectFd, (struct sockaddr *)&clientAddr, sizeof(clientAddr)) < 0) {
-        std::cout << "Connect Server Error" << std::endl;
+    if ((this->connectFd = Util::connectTcp(this->serverIp.c_str(), this->serverPort)) == CABINET_ERR) {
+        std::cout << "connect server error" << std::endl;
         exit(1);
     }
     return CABINET_OK;

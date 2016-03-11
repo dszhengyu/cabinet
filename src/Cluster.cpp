@@ -85,7 +85,14 @@ void Cluster::init() {
     }
 }
 
-Client *Cluster::createClient(const int connectFd, const string &ip, const int port) {
+Client *Cluster::createClient() {
+    int connectFd = 0;
+    string ip;
+    int port = 0;
+    if ((connectFd = this->getConnectFd(ip, port)) == CABINET_ERR) {
+        logWarning("get connect fd error");
+        return nullptr;
+    }
     ClusterClient *newClient = new ClusterClient(this->clientIdMax, connectFd, ip, port, this);
 
     if (this->parents->addParents(newClient) == CABINET_ERR) {

@@ -64,7 +64,14 @@ void Server::init() {
     logNotice(cabinet_server_logo, this->port, ((PF == true) ? "enabled" : "disabled"));
 }
 
-Client *Server::createClient(const int connectFd, const string &ip, const int port) {
+Client *Server::createClient() {
+    int connectFd = 0;
+    string ip;
+    int port = 0;
+    if ((connectFd = this->getConnectFd(ip, port)) == CABINET_ERR) {
+        logWarning("get connect fd error");
+        return nullptr;
+    }
     Client * client = new ServerClient(this->clientIdMax, connectFd, ip, port, this->db, this);
     ++this->clientIdMax;
     logNotice("create client, client_id[%d], client_connect_fd[%d] client_ip[%s]", 
@@ -79,7 +86,7 @@ Client *Server::createClient(const int connectFd, const string &ip, const int po
 int Server::importPF() {
     logNotice("start import persistence file");
     //create a client, set client category
-    Client *pFClient = this->createClient(-1, string(), -1);
+    Client *pFClient = new ServerClient(this->clientIdMax++, -1, string(), 0, this->db, this);
     pFClient->setCategory(Client::LOCAL_PF_CLIENT);
 
     //init read pf

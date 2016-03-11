@@ -18,7 +18,7 @@ public:
     Cluster();
     void initConfig();
     void init();
-    Client *createClient(const int connectFd, const string &ip, const int port);
+    Client *createClient();
     int deleteClient(Client *client);
     int cron();
     int nextCronTime();

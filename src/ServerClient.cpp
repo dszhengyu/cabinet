@@ -13,6 +13,7 @@ ServerClient::ServerClient(long clientId, int fd, const string &ip, const int po
  *
  */
 int ServerClient::executeCommand() {
+    logNotice("server client execute command");
     const string &commandName = this->protocolStream.getCommandName();
     Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
 
@@ -25,9 +26,13 @@ int ServerClient::executeCommand() {
 
     //execute
     if (selectedCommand(this) == CABINET_ERR) {
-        logWarning("client client_id[%d] execute command error", this->getClientId());
+        logWarning("server client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
     }
     return CABINET_OK;
 }
 
+ServerClient::~ServerClient()
+{
+
+}

@@ -14,6 +14,7 @@ public:
     ServerClient(long clientId, int fd, const string &ip, const int port, DataBase *dataBasePtr, Cabinet *cabinet);
     int executeCommand();
     DataBase *getDataBase() const {return this->dataBasePtr;}
+    ~ServerClient();
 
 protected:
     DataBase *dataBasePtr;

@@ -3,11 +3,21 @@
 
 ClusterClient::ClusterClient(long clientId, int fd, const string &ip, const int port, Cluster *cluster) :
     Client(clientId, fd, ip, port, cluster),
-    cluster(cluster)
+    cluster(cluster),
+    dealingEntryIndex(0)
 {
 }
 
 int ClusterClient::executeCommand() {
+    //select command
+    const string &commandName = this->protocolStream.getCommandName();
+    Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
+
+    //execute
+    if (selectedCommand[this] == CABINET_ERR) {
+        logWarning("cluster client client_id[%d] execute command error", this->getClientId());
+        return CABINET_ERR;
+    }
     return CABINET_OK;
 }
 

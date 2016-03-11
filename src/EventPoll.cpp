@@ -116,19 +116,15 @@ int EventPoll::processEvent() {
             int eventFd = events[processingNumber].data.fd;
             auto eventType = events[processingNumber].events;
             //监听套接字的事件来到
-            //1. 获取连接套接字
-            //2. 创建client
-            //3. 将client监听可读加入eventpoll
+            //1. 创建client
+            //2. 将client监听可读加入eventpoll
             if ((eventFd == this->cabinet->getListenFd()) && (eventType & EPOLLIN)) {
                 logDebug("event poll listen fd readable");
-                int connectFd = 0;
-                string ip;
-                int port = 0;
-                if ((connectFd = this->cabinet->getConnectFd(ip, port)) == CABINET_ERR) {
-                    logWarning("get connect fd error");
+                Client *newClient = this->cabinet->createClient();
+                if (newClient == nullptr) {
+                    logNotice("create client error");
                     continue;
                 }
-                Client *newClient = this->cabinet->createClient(connectFd, ip, port);
                 this->createFileEvent(newClient, READ_EVENT);
                 continue;
             }

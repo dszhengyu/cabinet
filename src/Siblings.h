@@ -4,22 +4,25 @@
 #include "ClusterClient.h"
 #include "Configuration.h"
 #include <vector>
+#include <string>
 class ClusterClient;
 class Configuration;
 using std::vector;
+using std::string;
 
 class Siblings
 {
 public:
     Siblings();
-    int recognizeSiblings(const Configuration &conf);
-    int addSiblings(ClusterClient *sibling);
+    int recognizeSiblings(Configuration &conf);
+    int addSiblings(int clusterId, ClusterClient *sibling);
     int deleteSiblings(ClusterClient *sibling);
     vector<ClusterClient *> getOnlineSiblings();
     bool satisfyWorkingBaseling();
     int connectLostSiblings();
 
 private:
+    int clusterId;
     vector<int> clusterIdVector;
     map<int, string> ipMap;
     map<int, int> portMap;

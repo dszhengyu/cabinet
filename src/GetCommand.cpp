@@ -13,6 +13,7 @@
  *
  */
 int GetCommand::operator()(Client *client) const {
+    logDebug("execute get command for server client");
     ServerClient *serverClient = (ServerClient *)client;
     //check user resolved input
     const vector<string> &argv = client->getReceiveArgv();

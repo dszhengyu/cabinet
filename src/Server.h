@@ -15,7 +15,7 @@ public :
     Server();
     void initConfig();
     void init();
-    Client *createClient();
+    Client *createClient(int listenFd);
     int deleteClient(Client *client) {return CABINET_OK;}
     int cron() {return CABINET_OK;}
     int nextCronTime() {return -1;}

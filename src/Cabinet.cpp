@@ -15,22 +15,23 @@ Cabinet::Cabinet() :
 
 } 
 
-int Cabinet::listenOnPort() {
-    if ((this->listenFd = Util::listenTcp(this->port)) == CABINET_ERR) {
-        logFatal("listen on port error");
+int Cabinet::listenOnPort(int port) {
+    int listenFd;
+    if ((listenFd = Util::listenTcp(port)) == CABINET_ERR) {
+        logFatal("listen on port error, port[%d]", port);
         return CABINET_ERR;
     }
-    return CABINET_OK;
+    return listenFd;
 }
 
 /* 
  * brief: 获取客户端连接
  *      成功返回描述符, 失败打印日志, 返回错误
  */
-int Cabinet::getConnectFd(string &strIP, int &port) {
+int Cabinet::getConnectFd(int listenFd, string &strIP, int &port) {
     logDebug("server get client connect");
     int connectFd;
-    if ((connectFd = Util::acceptTcp(this->listenFd, strIP, port)) == CABINET_ERR) {
+    if ((connectFd = Util::acceptTcp(listenFd, strIP, port)) == CABINET_ERR) {
         logWarning("accept connect error");
         return CABINET_ERR;
     }

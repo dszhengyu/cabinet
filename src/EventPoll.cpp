@@ -6,7 +6,8 @@
 EventPoll::EventPoll(Cabinet *cabinet):
     cabinet(cabinet),
     readFileEventMap(),
-    writeFileEventMap()
+    writeFileEventMap(),
+    listenFdSet()
 {
 
 }
@@ -77,7 +78,12 @@ int EventPoll::removeFileEvent(Client *client, int eventType) {
 }
 
 int EventPoll::pollListenFd(int listenFd) {
-    logDebug("event poll poll listen fd");
+    logDebug("event poll poll listen fd[%d]", listenFd);
+    if (this->listenFdSet.find(listenFd) != this->listenFdSet.end()) {
+        logWarning("listen fd already added in event poll, listen fd[%d]", listenFd);
+        return CABINET_ERR;
+    }
+    this->listenFdSet.insert(listenFd);
     return this->fileEventOperation(listenFd, READ_EVENT, this->ADD_EVENT);
 }
 
@@ -118,9 +124,9 @@ int EventPoll::processEvent() {
             //监听套接字的事件来到
             //1. 创建client
             //2. 将client监听可读加入eventpoll
-            if ((eventFd == this->cabinet->getListenFd()) && (eventType & EPOLLIN)) {
+            if ((this->listenFdSet.find(eventFd) != this->listenFdSet.end()) && (eventType & EPOLLIN)) {
                 logDebug("event poll listen fd readable");
-                Client *newClient = this->cabinet->createClient();
+                Client *newClient = this->cabinet->createClient(eventFd);
                 if (newClient == nullptr) {
                     logNotice("create client error");
                     continue;

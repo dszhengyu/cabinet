@@ -21,7 +21,9 @@ Cluster::Cluster():
     hz(10),
     electionTimeout(100),
     receiveVotes(0),
-    winVoteBaseline(0)
+    winVoteBaseline(0),
+    clusterPort(-1),
+    clusterListenFd(-1)
 {
 }
 
@@ -37,12 +39,13 @@ void Cluster::initConfig() {
         this->hz = std::stoi(conf["CLUSTER_HZ"]);
         this->electionTimeout = std::stoi(conf["CLUSTER_ELECTION_TIMEOUT"]);
         this->winVoteBaseline = std::stoi(conf["CLUSTER_TOTAL_NUMBER"]) / 2 + 1;
+        this->clusterPort = std::stoi(conf["CLUSTER_CLUSTER_PORT"]);
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());
         exit(1);
     }
 
-    this->siblings = new Siblings();
+    this->siblings = new Siblings(this);
     if (this->siblings->recognizeSiblings(conf) == CABINET_ERR) {
         logFatal("recognize siblings error, exit");
         exit(1);
@@ -66,11 +69,16 @@ void Cluster::init() {
     this->commandKeeperPtr = new CommandKeeper();
     this->commandKeeperPtr->createClusterCommandMap();
 
-    if (this->listenOnPort() == CABINET_ERR) {
-        logFatal("listen on port error");
+    if ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
+        logFatal("listen on port error, port[%d]", this->port);
         exit(1);
     }
 
+    if ((this->clusterListenFd = this->listenOnPort(this->clusterPort)) == CABINET_ERR) {
+        logFatal("listen on cluster port error, cluster port[%d]", this->clusterPort);
+        exit(1);
+    }
+   
     this->eventPoll = new EventPoll(this);
     if (this->eventPoll->initEventPoll() == CABINET_ERR) {
         logFatal("create event poll error");
@@ -85,25 +93,51 @@ void Cluster::init() {
     }
 }
 
-Client *Cluster::createClient() {
+Client *Cluster::createClient(int listenFd) {
     int connectFd = 0;
     string ip;
     int port = 0;
-    if ((connectFd = this->getConnectFd(ip, port)) == CABINET_ERR) {
+    if ((connectFd = this->getConnectFd(listenFd, ip, port)) == CABINET_ERR) {
         logWarning("get connect fd error");
         return nullptr;
     }
-    ClusterClient *newClient = new ClusterClient(this->clientIdMax, connectFd, ip, port, this);
 
-    if (this->parents->addParents(newClient) == CABINET_ERR) {
-        logWarning("cluster cluster_id[%d] add cluster client to parents error", this->getClusterId());
-        return nullptr;
+    //through listen fd depend which group to in, parents or siblings
+    ClusterClient *newClient = nullptr;
+    if (listenFd == this->getListenFd()) {
+        logNotice("cluster cluster_id[%d] add new client", this->getClusterId());
+        newClient = this->createNormalClient(connectFd, ip, port);
+        if (this->parents->addParents(newClient) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] add cluster client to parents error", this->getClusterId());
+            return nullptr;
+        }
+    }
+    else if (listenFd == this->clusterListenFd) {
+        logNotice("cluster cluster_id[%d] add new cluster node", this->getClusterId());
+        newClient = this->createClusterClient(connectFd, ip, port);
+        if (this->siblings->addSiblings(newClient) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] add cluster client to siblings error", this->getClusterId());
+            return nullptr;
+        }
+    }
+    else {
+        logFatal("should not get this listen fd, please check");
+        exit(1);
     }
 
-    ++this->clientIdMax;
-    logNotice("cluster cluster_id[%d] create client, client_id[%d], client_connect_fd[%d] client_ip[%s]", 
-            this->getClusterId(), newClient->getClientId(), connectFd, newClient->getIp().c_str());
     return (Client *)newClient;
+}
+
+ClusterClient *Cluster::createNormalClient(int connectFd, const string &ip, const int port) {
+    ClusterClient *newClient = new ClusterClient(this->clientIdMax++, connectFd, ip, port, this);
+    return newClient;
+}
+
+
+ClusterClient *Cluster::createClusterClient(int connectFd, const string &ip, const int port) {
+    ClusterClient *newClient = new ClusterClient(this->clientIdMax++, connectFd, ip, port, this);
+    newClient->setCategory(Client::CLUSTER_CLIENT);
+    return newClient;
 }
 
 int Cluster::deleteClient(Client *client) {

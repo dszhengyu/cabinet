@@ -2,7 +2,7 @@
 #include "Const.h"
 #include "Util.h"
 
-Siblings::Siblings():
+Siblings::Siblings(Cluster *cluster):
     clusterId(-1),
     clusterIdVector(),
     ipMap(),
@@ -10,7 +10,8 @@ Siblings::Siblings():
     nextIndexMap(),
     matchIndexMap(),
     connectStatus(),
-    clusterIdClientPtrMap()
+    clusterIdClientPtrMap(),
+    cluster(cluster)
 {
 }
 
@@ -28,7 +29,7 @@ int Siblings::recognizeSiblings(Configuration &conf) {
             }
             clusterIdVector.push_back(idReading);
             string ip = conf[string("CLUSTER_IP_") + std::to_string(idReading)];
-            int port = std::stoi(conf[string("CLUSTER_PORT_") + std::to_string(idReading)]);
+            int port = std::stoi(conf[string("CLUSTER_CLUSTER_PORT_") + std::to_string(idReading)]);
             this->ipMap[idReading] = ip;
             this->portMap[idReading] = port;
             this->nextIndexMap[idReading] = 0;
@@ -45,7 +46,8 @@ int Siblings::recognizeSiblings(Configuration &conf) {
     return CABINET_OK;
 }
 
-int Siblings::addSiblings(int clusterId, ClusterClient *sibling) {
+int Siblings::addSiblings(ClusterClient *sibling) {
+    int clusterId = sibling->getClusterId();
     if (this->clusterIdClientPtrMap.find(clusterId) == this->clusterIdClientPtrMap.end()) {
         logWarning("trying to add cluster with invalid id, id[%d]", clusterId);
         return CABINET_ERR;
@@ -70,6 +72,22 @@ int Siblings::addSiblings(int clusterId, ClusterClient *sibling) {
 }
 
 int Siblings::deleteSiblings(ClusterClient *sibling) {
+    int clusterId = sibling->getClusterId();
+    if (this->clusterIdClientPtrMap.find(clusterId) == this->clusterIdClientPtrMap.end()) {
+        logWarning("trying to delete cluster with invalid id, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+
+    if (this->clusterIdClientPtrMap[clusterId] == nullptr) {
+        logFatal("trying to delete cluster while it is already deleted, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+
+    this->clusterIdClientPtrMap[clusterId] = nullptr;
+    this->connectStatus[clusterId] = false;
+    this->nextIndexMap[clusterId] = 0;
+    this->matchIndexMap[clusterId] = 0;
+
     return CABINET_OK;
 }
 
@@ -94,6 +112,10 @@ bool Siblings::satisfyWorkingBaseling() {
 
 /*
  *brief: only connect lost siblings whose id is smaller than "this"
+ *step: 1. get connect
+ *      2. create clusterclient with correct tyoe
+ *      3. add the new client into siblings
+ *      4. add the new client into eventpoll
  */
 int Siblings::connectLostSiblings() {
     for (int clusterId : this->clusterIdVector) {
@@ -108,6 +130,18 @@ int Siblings::connectLostSiblings() {
                 continue;
             }
             //connect success
+            ClusterClient *newSibling = this->cluster->createClusterClient(connectFd, ipMap[clusterId], portMap[clusterId]);
+            EventPoll *eventpoll = this->cluster->getEventPoll();
+            if (eventpoll->createFileEvent(newSibling, READ_EVENT) == CABINET_ERR) {
+                logWarning("add sibling into event poll error");
+                delete newSibling;
+                continue;
+            }
+            if (this->addSiblings(newSibling) == CABINET_ERR) {
+                logWarning("add sibling into sinblings error");
+                delete newSibling;
+                continue;
+            }
         }
     }
     return CABINET_OK;

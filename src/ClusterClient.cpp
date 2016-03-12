@@ -4,7 +4,8 @@
 ClusterClient::ClusterClient(long clientId, int fd, const string &ip, const int port, Cluster *cluster) :
     Client(clientId, fd, ip, port, cluster),
     cluster(cluster),
-    dealingEntryIndex(0)
+    dealingEntryIndex(0),
+    clusterId(-1)
 {
 }
 

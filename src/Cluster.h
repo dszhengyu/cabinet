@@ -6,11 +6,13 @@
 #include "Children.h"
 #include "Parents.h"
 #include "Client.h"
+#include "ClusterClient.h"
 class Cabinet;
 class Siblings;
 class Children;
 class Parents;
 class Client;
+class ClusterClient;
 
 class Cluster: public Cabinet
 {
@@ -18,7 +20,9 @@ public:
     Cluster();
     void initConfig();
     void init();
-    Client *createClient();
+    Client *createClient(int listenFd);
+    ClusterClient *createNormalClient(int connectFd, const string &ip, const int port);
+    ClusterClient *createClusterClient(int connectFd, const string &ip, const int port);
     int deleteClient(Client *client);
     int cron();
     int nextCronTime();
@@ -47,6 +51,8 @@ private:
     int electionTimeout;
     int receiveVotes;
     int winVoteBaseline;
+    int clusterPort;
+    int clusterListenFd;
 
     static const char LEADER = 'L';
     static const char FOLLOWER = 'F';

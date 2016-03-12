@@ -5,11 +5,13 @@
 #include "Client.h"
 #include <string>
 #include <map>
+#include <set>
 class Cabinet;
 class Client;
 
 using std::string;
 using std::map;
+using std::set;
 
 class EventPoll
 {
@@ -30,6 +32,7 @@ private:
     fileeventmap_t readFileEventMap;
     fileeventmap_t writeFileEventMap;
     int eventPollFd;
+    set<int> listenFdSet;
     const int ADD_EVENT = 0;
     const int DEL_EVENT = 1;
     const int MOD_EVENT = 2;

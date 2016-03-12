@@ -1,10 +1,12 @@
 #ifndef SIBLINGS_H
 #define SIBLINGS_H
 
+#include "Cluster.h"
 #include "ClusterClient.h"
 #include "Configuration.h"
 #include <vector>
 #include <string>
+class Cluster;
 class ClusterClient;
 class Configuration;
 using std::vector;
@@ -13,9 +15,9 @@ using std::string;
 class Siblings
 {
 public:
-    Siblings();
+    Siblings(Cluster *cluster);
     int recognizeSiblings(Configuration &conf);
-    int addSiblings(int clusterId, ClusterClient *sibling);
+    int addSiblings(ClusterClient *sibling);
     int deleteSiblings(ClusterClient *sibling);
     vector<ClusterClient *> getOnlineSiblings();
     bool satisfyWorkingBaseling();
@@ -30,5 +32,6 @@ private:
     map<int, long> matchIndexMap;
     map<int, bool> connectStatus;
     map<int, ClusterClient*> clusterIdClientPtrMap;
+    Cluster *cluster;
 };
 #endif

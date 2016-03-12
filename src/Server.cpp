@@ -39,7 +39,7 @@ void Server::init() {
     this->commandKeeperPtr = new CommandKeeper();
     this->commandKeeperPtr->createServerCommandMap();
 
-    if (this->listenOnPort() == CABINET_ERR) {
+    if ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
         logFatal("listen on port error");
         exit(1);
     }
@@ -64,11 +64,15 @@ void Server::init() {
     logNotice(cabinet_server_logo, this->port, ((PF == true) ? "enabled" : "disabled"));
 }
 
-Client *Server::createClient() {
+Client *Server::createClient(int listenFd) {
+    if (listenFd != this->getListenFd()) {
+        logWarning("get fault listen fd to create client");
+        return nullptr;
+    }
     int connectFd = 0;
     string ip;
     int port = 0;
-    if ((connectFd = this->getConnectFd(ip, port)) == CABINET_ERR) {
+    if ((connectFd = this->getConnectFd(listenFd, ip, port)) == CABINET_ERR) {
         logWarning("get connect fd error");
         return nullptr;
     }

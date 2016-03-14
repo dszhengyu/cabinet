@@ -51,7 +51,7 @@ void Cluster::initConfig() {
         exit(1);
     }
 
-    this->children = new Children();
+    this->children = new Children(this);
     if (this->children->recognizeChildren(conf) == CABINET_ERR) {
         logFatal("recognize children error, exit");
         exit(1);
@@ -114,7 +114,8 @@ Client *Cluster::createClient(int listenFd) {
     }
     else if (listenFd == this->clusterListenFd) {
         logNotice("cluster cluster_id[%d] add new cluster node", this->getClusterId());
-        newClient = this->createClusterClient(connectFd, ip, port);
+        newClient = this->createNormalClient(connectFd, ip, port);
+        newClient->setCategory(Client::CLUSTER_CLIENT);
         if (this->siblings->addSiblings(newClient) == CABINET_ERR) {
             logWarning("cluster cluster_id[%d] add cluster client to siblings error", this->getClusterId());
             return nullptr;
@@ -130,13 +131,6 @@ Client *Cluster::createClient(int listenFd) {
 
 ClusterClient *Cluster::createNormalClient(int connectFd, const string &ip, const int port) {
     ClusterClient *newClient = new ClusterClient(this->clientIdMax++, connectFd, ip, port, this);
-    return newClient;
-}
-
-
-ClusterClient *Cluster::createClusterClient(int connectFd, const string &ip, const int port) {
-    ClusterClient *newClient = new ClusterClient(this->clientIdMax++, connectFd, ip, port, this);
-    newClient->setCategory(Client::CLUSTER_CLIENT);
     return newClient;
 }
 

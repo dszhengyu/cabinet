@@ -22,7 +22,6 @@ public:
     void init();
     Client *createClient(int listenFd);
     ClusterClient *createNormalClient(int connectFd, const string &ip, const int port);
-    ClusterClient *createClusterClient(int connectFd, const string &ip, const int port);
     int deleteClient(Client *client);
     int cron();
     int nextCronTime();

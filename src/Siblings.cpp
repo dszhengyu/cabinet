@@ -130,7 +130,8 @@ int Siblings::connectLostSiblings() {
                 continue;
             }
             //connect success
-            ClusterClient *newSibling = this->cluster->createClusterClient(connectFd, ipMap[clusterId], portMap[clusterId]);
+            ClusterClient *newSibling = this->cluster->createNormalClient(connectFd, ipMap[clusterId], portMap[clusterId]);
+            newSibling->setCategory(Client::CLUSTER_CLIENT);
             EventPoll *eventpoll = this->cluster->getEventPoll();
             if (eventpoll->createFileEvent(newSibling, READ_EVENT) == CABINET_ERR) {
                 logWarning("add sibling into event poll error");

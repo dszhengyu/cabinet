@@ -1,4 +1,5 @@
 #include "ServerClient.h"
+#include "Entry.h"
 
 ServerClient::ServerClient(long clientId, int fd, const string &ip, const int port, DataBase *dataBasePtr, Cabinet *cabinet) :
     Client(clientId, fd, ip, port, cabinet),
@@ -21,7 +22,8 @@ int ServerClient::executeCommand() {
     if ((this->category != Client::LOCAL_PF_CLIENT) && 
             (pf != nullptr) &&
             (selectedCommand.needPF() == true)) {
-        this->pf->appendToPF(this);
+        Entry entry(this->protocolStream.getCurCommandBuf());
+        this->pf->appendToPF(entry);
     }
 
     //execute

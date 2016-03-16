@@ -2,6 +2,7 @@
 #define PERSISTENCEFILE_H
 
 #include "Client.h"
+#include "Entry.h"
 #include <string>
 #include <fstream>
 
@@ -9,6 +10,7 @@ using std::ofstream;
 using std::ifstream;
 
 class Client;
+class Entry;
 
 using std::string;
 
@@ -16,18 +18,18 @@ class PersistenceFile
 {
 public:
     PersistenceFile();
-    int appendToPF(Client *);
+    int appendToPF(const Entry &entry);
     int initReadPF();
     int endReadPF();
     int readNextPFEntry();
-    const string &getCurPFEntry() {return this->curPFEntry;}
+    const Entry &getCurPFEntry() {return this->curPFEntry;}
     ~PersistenceFile();
 private:
-    string curPFEntry;
+    Entry curPFEntry;
     string pFName;
     ifstream pFIn;
     ofstream pFOut;
-    const static char delimiter = '\r';
     constexpr const static char *serverPFName = "cabinet-server.pf";
+    constexpr const static char *clusterPFName = "cabinet-cluster.pf";
 };
 #endif

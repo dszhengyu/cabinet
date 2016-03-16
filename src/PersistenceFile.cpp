@@ -1,6 +1,5 @@
 #include "PersistenceFile.h"
 #include "Const.h"
-using std::getline;
 
 PersistenceFile::PersistenceFile():
     curPFEntry(),
@@ -10,14 +9,13 @@ PersistenceFile::PersistenceFile():
 {
 }
 
-int PersistenceFile::appendToPF(Client *client) {
-    const string &curCommandBuf = client->getCurCommandBuf();
-    pFOut << curCommandBuf << PersistenceFile::delimiter;
-    pFOut.flush();
+int PersistenceFile::appendToPF(const Entry &entry) {
+    this->pFOut << entry;
     return CABINET_OK;
 }
 
 int PersistenceFile::initReadPF() {
+    logDebug("init read pf");
     this->pFIn.open(pFName);
     if (this->pFIn.good()) {
         return CABINET_OK;
@@ -26,16 +24,18 @@ int PersistenceFile::initReadPF() {
 }
 
 int PersistenceFile::endReadPF() {
+    logDebug("end read pf");
     this->pFIn.close();
     return CABINET_OK;
 }
 
 int PersistenceFile::readNextPFEntry() {
+    logDebug("read next pf entry");
     if (!this->pFIn.good()) {
         return CABINET_ERR;
     }
-    getline(this->pFIn, this->curPFEntry, PersistenceFile::delimiter);
-    if (this->curPFEntry.length() == 0) {
+    this->pFIn >> this->curPFEntry;
+    if (!this->pFIn.good()) {
         return CABINET_ERR;
     }
     return CABINET_OK;

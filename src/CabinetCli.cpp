@@ -177,7 +177,7 @@ int CabinetCli::receiveServerOutput() {
             exit(1);
             return CABINET_ERR;
         }
-        logDebug("cabinet cli receive server output[/n%s] output_len[%d]", readBuf, nRead);
+        logDebug("cabinet cli receive server output[\n%s] output_len[%d]", readBuf, nRead);
         this->protocolStream.fillReceiveBuf(readBuf, nRead);
 
         //resolve receive stream

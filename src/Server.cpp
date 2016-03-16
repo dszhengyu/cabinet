@@ -2,6 +2,7 @@
 #include "Util.h"
 #include "ServerClient.h"
 #include "Configuration.h"
+#include "Entry.h"
 #include <cstring>
 #include <cstdlib>
 #include <unistd.h>
@@ -102,17 +103,18 @@ int Server::importPF() {
     //start loop, read one entry from pf
     while (this->pf->readNextPFEntry() != CABINET_ERR) {
         //feed the client, resolve it, execute it
-        const string &curPFEntry = this->pf->getCurPFEntry();
-        logDebug("--importing persistence file, current entry[\n%s]", curPFEntry.c_str());
-        pFClient->fillReceiveBuf(curPFEntry); 
+        const Entry &curPFEntry = this->pf->getCurPFEntry();
+        const string &curEntryContent = curPFEntry.getContent();
+        logDebug("--importing persistence file, current entry[\n%s]", curEntryContent.c_str());
+        pFClient->fillReceiveBuf(curEntryContent); 
         if (pFClient->resolveReceiveBuf() == CABINET_ERR) {
-            logWarning("import persistence file error, revolve error, current entry[\n%s]", curPFEntry.c_str());
+            logWarning("import persistence file error, revolve error, current entry[\n%s]", curEntryContent.c_str());
             return CABINET_ERR;
         }
 
         if (pFClient->isReceiveComplete() == true) {
             if (pFClient->executeCommand() == CABINET_ERR) {
-                logWarning("import persistence file error, execute error, current entry[\n%s]", curPFEntry.c_str());
+                logWarning("import persistence file error, execute error, current entry[\n%s]", curEntryContent.c_str());
                 return CABINET_ERR;
             }
         }

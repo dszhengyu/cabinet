@@ -17,19 +17,21 @@ using std::string;
 class PersistenceFile 
 {
 public:
-    PersistenceFile();
+    PersistenceFile(const string &pfFileName, const string &tmpPFName);
+
+    int findEntry(const long index, Entry &entry);
+    int findLastEntry(Entry &entry);
+    int deleteEntryAfter(long index);
+
     int appendToPF(const Entry &entry);
-    int initReadPF();
-    int endReadPF();
-    int readNextPFEntry();
-    const Entry &getCurPFEntry() {return this->curPFEntry;}
+    int getNextPFEntry(Entry &entry);
+
     ~PersistenceFile();
 private:
-    Entry curPFEntry;
+    int resetFileStream();
     string pFName;
-    ifstream pFIn;
+    string tmpPFName;
     ofstream pFOut;
-    constexpr const static char *serverPFName = "cabinet-server.pf";
-    constexpr const static char *clusterPFName = "cabinet-cluster.pf";
+    ifstream pFIn;
 };
 #endif

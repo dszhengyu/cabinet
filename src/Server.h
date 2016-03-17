@@ -25,6 +25,7 @@ public :
 private:
     long serverId;
     DataBase *db;
+    string pfName;
 };
 
 #endif

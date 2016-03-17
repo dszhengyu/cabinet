@@ -11,7 +11,8 @@
 Server::Server() :
     Cabinet(),
     serverId(-1),
-    db(nullptr)
+    db(nullptr),
+    pfName()
 {
 
 } 
@@ -25,6 +26,7 @@ void Server::initConfig() {
     try{
         this->serverId = std::stoi(conf["SERVER_ID"]);
         this->port = std::stoi(conf["SERVER_PORT"]);;
+        this->pfName = conf["SERVER_PF_NAME"];
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());
         exit(1);
@@ -57,7 +59,7 @@ void Server::init() {
 
     if (PF) {
         logNotice("persistence is require");
-        this->pf = new PersistenceFile();
+        this->pf = new PersistenceFile(this->pfName, this->pfName + std::to_string(this->serverId));
         this->importPF();
     }
     logNotice("init server done");
@@ -94,17 +96,11 @@ int Server::importPF() {
     Client *pFClient = new ServerClient(this->clientIdMax++, -1, string(), 0, this->db, this);
     pFClient->setCategory(Client::LOCAL_PF_CLIENT);
 
-    //init read pf
-    if (this->pf->initReadPF() == CABINET_ERR) {
-        logWarning("init persistence file error");
-        return CABINET_ERR;
-    }
-
     //start loop, read one entry from pf
-    while (this->pf->readNextPFEntry() != CABINET_ERR) {
+    Entry entry;
+    while (this->pf->getNextPFEntry(entry) != CABINET_ERR) {
         //feed the client, resolve it, execute it
-        const Entry &curPFEntry = this->pf->getCurPFEntry();
-        const string &curEntryContent = curPFEntry.getContent();
+        const string &curEntryContent = entry.getContent();
         logDebug("--importing persistence file, current entry[\n%s]", curEntryContent.c_str());
         pFClient->fillReceiveBuf(curEntryContent); 
         if (pFClient->resolveReceiveBuf() == CABINET_ERR) {
@@ -120,7 +116,6 @@ int Server::importPF() {
         }
         pFClient->resetClient();
     }
-    this->pf->endReadPF();
     logNotice("end import persistence file");
     return CABINET_OK;
 }

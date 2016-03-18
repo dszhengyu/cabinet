@@ -69,6 +69,16 @@ int Client::initReplyHead(int argc) {
     return CABINET_OK;
 }
 
+int Client::appendReplyType(const char commandType) {
+    logDebug("append reply type");
+    if (this->category != NORMAL_CLIENT) {
+        logDebug("no normal client no reply");
+        return CABINET_OK; 
+    }
+    this->protocolStream.appendCommandType(commandType);
+    return CABINET_OK;
+}
+
 int Client::appendReplyBody(const string &part) {
     logDebug("append reply body");
     if (this->category != NORMAL_CLIENT) {
@@ -79,6 +89,9 @@ int Client::appendReplyBody(const string &part) {
     return CABINET_OK;
 }
 
+int Client::appendReplyBody(const char *part) {
+    return this->appendReplyBody(string(part));
+}
 /* 
  * brief: 当输出缓冲区中有数据需要发送给客户时调用
  * notice: 发送完成后, 需要删除eventloop中的可写轮询, 安装可读轮询

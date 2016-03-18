@@ -1,8 +1,15 @@
 #include "CommandKeeper.h"
 #include "NoMatchCommand.h"
-#include "GetCommand.h"
-#include "SetCommand.h"
-#include "DelCommand.h"
+
+#ifndef CABINET_CLUSTER
+    #include "GetCommand.h"
+    #include "SetCommand.h"
+    #include "DelCommand.h"
+#endif
+
+#ifdef CABINET_CLUSTER
+    #include "RequestVoteCommand.h"
+#endif
 
 CommandKeeper::CommandKeeper() :
     commandMap()
@@ -10,11 +17,15 @@ CommandKeeper::CommandKeeper() :
 
 }
 
+#ifdef CABINET_CLUSTER
 void CommandKeeper::createClusterCommandMap() {
     logNotice("create cluster command map");
     commandMap["nomatch"] = new NoMatchCommand();
+    commandMap["requestvote"] = new RequestVoteCommand();
 }
+#endif
 
+#ifndef CABINET_CLUSTER
 void CommandKeeper::createServerCommandMap() {
     logNotice("create server command map");
     commandMap["get"] = new GetCommand();
@@ -30,6 +41,7 @@ void CommandKeeper::createClientCommandMap() {
     commandMap["del"] = new DelCommand();
     commandMap["nomatch"] = new NoMatchCommand();
 }
+#endif
 
 Command &CommandKeeper::selectCommand(const string &commandName) {
     auto commandIter = commandMap.find(commandName);

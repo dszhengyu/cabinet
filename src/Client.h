@@ -33,6 +33,7 @@ public:
     bool isReceiveComplete() const {return this->protocolStream.isReceiveComplete();}
     int sendReply();
     int initReplyHead(int argc);
+    int appendReplyType(const char commandType);
     int appendReplyBody(const string &);
     int appendReplyBody(const char *);
 

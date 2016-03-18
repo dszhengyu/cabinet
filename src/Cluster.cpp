@@ -267,6 +267,7 @@ int Cluster::nextCronTime() {
 int Cluster::toLead() {
     logNotice("cluster cluster_id[%d] to lead", this->getClusterId());
     this->setClusterRole(Cluster::LEADER);
+    this->votedFor = -1;
 
     vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
     Command &firstAppendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
@@ -286,6 +287,7 @@ int Cluster::toFollow(long newTerm) {
 
     this->currentTerm = newTerm;
     this->lastUnixTimeInMs = Util::getCurrentTimeInMs();
+    this->votedFor = -1;
     
     return CABINET_OK;
 }

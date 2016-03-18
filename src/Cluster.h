@@ -29,12 +29,20 @@ public:
     int toLead();
     int toFollow(long newTerm);
     int toCandidate();
+    bool isLeader() const {return this->getClusterRole() == Cluster::LEADER;}
+    bool isFollower() const {return this->getClusterRole() == Cluster::FOLLOWER;}
+    bool isCandidate() const {return this->getClusterRole() == Cluster::CANDIDATE;}
 
     int getClusterId() const {return this->clusterId;}
-    const char getClusterRole() const {return this->role;}
-    void setClusterRole(const char newRole) {this->role = newRole;}
+    long getTerm() const {return this->currentTerm;}
+    long getIndex() const {return this->commitIndex;}
+    int alreadyVotedFor() const {return this->votedFor;}
+    void voteFor(int candidateId) {this->votedFor = candidateId;}
+
     ~Cluster();
 private:
+    const char getClusterRole() const {return this->role;}
+    void setClusterRole(const char newRole) {this->role = newRole;}
     int clusterId;
     char role;
     long currentTerm;

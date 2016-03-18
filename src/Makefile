@@ -5,7 +5,8 @@ CABINET_SERVER_NAME=cabinet-server
 CABINET_CLIENT_NAME=cabinet-cli
 
 #Common Dependency
-CABINET_COMMAND_OBJECT=GetCommand.o SetCommand.o DelCommand.o NoMatchCommand.o CommandKeeper.o 
+CABINET_COMMAND_OBJECT=GetCommand.o SetCommand.o DelCommand.o NoMatchCommand.o CommandKeeper.o
+CABINET_CLUSTER_COMMAND_OBJECT=NoMatchCommand.o CommandKeeper.o RequestVoteCommand.o
 CABINET_COMMON_HEADER=Command.h Const.h ValueObj.h CabinetLogo.h Cabinet.h Client.h
 CABINET_COMMON_OBJECT=Log.o Util.o ProtocolStream.o Configuration.o
 CABINET_DATABASE_OBJECT=DataBase.o StringObj.o
@@ -13,15 +14,14 @@ CABINET_DATABASE_OBJECT=DataBase.o StringObj.o
 #Target Dependency
 CABINET_CLUSTER_OBJECT=cabinet-cluster.o Cabinet.o Cluster.o Client.o ClusterClient.o EventPoll.o PersistenceFile.o Entry.o \
 					   Siblings.o Children.o Parents.o \
-						$(CABINET_COMMON_OBJECT) $(CABINET_COMMAND_OBJECT) $(CABINET_DATABASE_OBJECT)
+						$(CABINET_COMMON_OBJECT) $(CABINET_CLUSTER_COMMAND_OBJECT) $(CABINET_DATABASE_OBJECT)
 CABINET_SERVER_OBJECT=cabinet-server.o Cabinet.o Server.o Client.o ServerClient.o EventPoll.o PersistenceFile.o Entry.o \
 						$(CABINET_COMMON_OBJECT) $(CABINET_COMMAND_OBJECT) $(CABINET_DATABASE_OBJECT)
 CABINET_CLIENT_OBJECT=cabinet-cli.o CabinetCli.o $(CABINET_COMMON_OBJECT) $(CABINET_COMMAND_OBJECT)
 
 #Compile Arguements
-#CABINET_CLUSTER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_CLUSTER
-CABINET_CLUSTER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET
-CABINET_SERVER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET
+CABINET_CLUSTER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_CLUSTER -DCABINET
+CABINET_SERVER_CXXFLAGS= -std=c++11 -Wall -fPIC -DCABINET_SERVER -DCABINET
 CABINET_CLIENT_CXXFLAGS= -std=c++11 -Wall -fPIC -DCLIENT
 CXX=g++
 

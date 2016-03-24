@@ -11,7 +11,8 @@ Siblings::Siblings(Cluster *cluster):
     matchIndexMap(),
     connectStatus(),
     clusterIdClientPtrMap(),
-    cluster(cluster)
+    cluster(cluster),
+    currentLeaderId(-1)
 {
 }
 
@@ -179,4 +180,16 @@ int Siblings::validateClusterId(int clusterId) {
         return CABINET_ERR;
     }
     return CABINET_OK;
+}
+
+void Siblings::setNextIndexBatch(long newNextIndex) {
+    for (int clusterId : this->clusterIdVector) {
+        this->nextIndexMap[clusterId] = newNextIndex;
+    }
+}
+
+void Siblings::setMatchIndexBatch(long newMatchIndex) {
+    for (int clusterId : this->clusterIdVector) {
+        this->matchIndexMap[clusterId] = newMatchIndex;
+    }
 }

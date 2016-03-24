@@ -25,6 +25,7 @@ public:
     int deleteClient(Client *client);
     int cron();
     int nextCronTime();
+    Siblings *getSiblings() const {return this->siblings;}
 
     int toLead();
     int toFollow(long newTerm);
@@ -32,16 +33,17 @@ public:
     bool isLeader() const {return this->getClusterRole() == Cluster::LEADER;}
     bool isFollower() const {return this->getClusterRole() == Cluster::FOLLOWER;}
     bool isCandidate() const {return this->getClusterRole() == Cluster::CANDIDATE;}
+    long updateTimeout();
 
     int getClusterId() const {return this->clusterId;}
     long getTerm() const {return this->currentTerm;}
     long getIndex() const {return this->commitIndex;}
+    void setIndex(long index) {this->commitIndex = index;}
     int alreadyVotedFor() const {return this->votedFor;}
     void voteFor(int candidateId) {this->votedFor = candidateId;}
     void increaseVote() {++this->receiveVotes;}
     bool achieveLeaderBaseline() const {return this->receiveVotes >= this->winVoteBaseline;}
 
-    Siblings *getSiblings() const {return this->siblings;}
 
     ~Cluster();
 private:

@@ -216,8 +216,7 @@ int Cluster::cron() {
     }
 
     if (this->getClusterRole() == Cluster::FOLLOWER) {
-        long currentUnixTimeInMs = Util::getCurrentTimeInMs();
-        long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
+        long gap = this->updateTimeout();
         if (gap > this->electionTimeout) {
             logNotice("cluster cluster_id[%d] follower election timeout, change to candidate", this->getClusterId());
             if (this->toCandidate() == CABINET_ERR) {
@@ -230,8 +229,7 @@ int Cluster::cron() {
     }
 
     if (this->getClusterRole() == Cluster::CANDIDATE) {
-        long currentUnixTimeInMs = Util::getCurrentTimeInMs();
-        long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
+        long gap = this->updateTimeout();
         if (gap > this->electionTimeout) {
             //receive enough votes
             if (this->receiveVotes >= this->winVoteBaseline) {
@@ -257,6 +255,13 @@ int Cluster::cron() {
     return CABINET_OK;
 }
 
+long Cluster::updateTimeout() {
+    long currentUnixTimeInMs = Util::getCurrentTimeInMs();
+    long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
+    this->lastUnixTimeInMs = currentUnixTimeInMs;
+    return gap;
+}
+
 int Cluster::nextCronTime() {
     return 1000 / this->hz;
 }
@@ -277,6 +282,12 @@ int Cluster::toLead() {
             continue;
         }
     }
+
+    Entry lastEntry;
+    this->pf->findLastEntry(lastEntry);
+    long lastEntryIndex = lastEntry.getIndex();
+    this->siblings->setNextIndexBatch(lastEntryIndex);
+    this->siblings->setMatchIndexBatch(0);
 
     return CABINET_OK;
 }

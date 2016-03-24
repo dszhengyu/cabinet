@@ -34,10 +34,6 @@ ifstream &operator>>(ifstream &in, Entry &entry) {
         return in;
     }
     getline(in, contentStr, Entry::delimiter);
-    if (!in.good()) {
-        logWarning("pf file is broken");
-        return in;
-    }
     try {
         entry.setIndex(std::stoi(indexStr));
         entry.setTerm(std::stoi(termStr));

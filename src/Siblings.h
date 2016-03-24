@@ -26,6 +26,11 @@ public:
     long getSiblingNextIndex(int clusterId);
     int inscreaseSiblingNextIndex(int clusterId);
     int inscreaseSiblingMatchIndex(int clusterId);
+    void setNextIndexBatch(long newNextIndex);
+    void setMatchIndexBatch(long newMatchIndex);
+
+    int getLeaderId() const {return this->currentLeaderId;}
+    void setLeaderId(int leaderId) {this->currentLeaderId = leaderId;}
 
 private:
     int validateClusterId(int clusterId);
@@ -38,5 +43,6 @@ private:
     map<int, bool> connectStatus;
     map<int, ClusterClient*> clusterIdClientPtrMap;
     Cluster *cluster;
+    int currentLeaderId;
 };
 #endif

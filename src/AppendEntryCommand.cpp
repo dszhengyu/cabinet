@@ -1,6 +1,7 @@
 #include "AppendEntryCommand.h"
 #include "Cluster.h"
 #include "ClusterClient.h"
+#include <algorithm>
 
 /*
  * brief: role: Leader
@@ -36,26 +37,30 @@ int AppendEntryCommand::operator>>(Client *client) const {
     long commitIndex = cluster->getIndex();
     int leaderId = cluster->getClusterId();
     PersistenceFile *pf = cluster->getPersistenceFile();
+    Entry lastEntry;
+    pf->findLastEntry(lastEntry);
+    long lastLogIndex = lastEntry.getIndex();
 
-    long index = 0;
-    long term = 0;
-    string entryCommand;
+    Entry nextEntry;
     if (nextEntryIndex > 0) {
-        Entry nextEntry;
-        pf->findEntry(nextEntryIndex, nextEntry);
-        index = nextEntry.getIndex();
-        term = nextEntry.getTerm();
-        entryCommand = nextEntry.getContent();
+        if ((pf->findEntry(nextEntryIndex, nextEntry) == CABINET_ERR) &&
+                (nextEntryIndex > (lastLogIndex + 1))) {
+            logNotice("cluster cluster_id[%d] does not contain necessary entry to append, change to follower", 
+                    cluster->getClusterId());
+            cluster->toFollow(cluster->getTerm());
+            return CABINET_OK;
+        }
     }
+    long index = nextEntry.getIndex();
+    long term = nextEntry.getTerm();
+    string entryCommand = nextEntry.getContent();
 
-    long prevLogIndex = 0;
-    long prevLogTerm = 0;
+    Entry entryBeforeNextEntry;
     if (nextEntryIndex > 1) {
-        Entry entryBeforeNextEntry;
         pf->findEntry(nextEntryIndex - 1, entryBeforeNextEntry);
-        prevLogIndex = entryBeforeNextEntry.getIndex();
-        prevLogTerm = entryBeforeNextEntry.getTerm();
     }
+    long prevLogIndex = entryBeforeNextEntry.getIndex();
+    long prevLogTerm = entryBeforeNextEntry.getTerm();
 
     client->initReplyHead(17);
     client->appendReplyType(this->commandType());
@@ -82,11 +87,20 @@ int AppendEntryCommand::operator>>(Client *client) const {
 /*
  *brief: role: all
  *  argc: term
- *        candidateId
- *        lastLogIndex
- *        lastLogTerm
+ *        leaderId
+ *        prevLogIndex
+ *        prevLogTerm
+ *        index
+ *        term
+ *        entryCommand
+ *        leaderCommit
  *  response argc: term
- *                 voteGranted
+ *                 success
+ *notice:
+ *      1. if leader or candidate receive this and term is higher than itself
+ *          change to follower
+ *      2. index and term both are 0 mean this is a heartbeat
+ *      3. prevLogIndex and prevLogTerm should be check as long as the command is not stale
  */
 int AppendEntryCommand::operator[](Client *client) const {
     ClusterClient *clusterClient = (ClusterClient *) client;
@@ -98,54 +112,92 @@ int AppendEntryCommand::operator[](Client *client) const {
         exit(1);
     }   
 
-    long candidateTerm;
-    int candidateId;
-    long candidateLastLogIndex;
-    long candidateLastLogTerm;
+    long leaderTerm;
+    int leaderId;
+    long leaderPrevLogIndex;
+    long leaderPrevLogTerm;
+    long leaderEntryIndex;
+    long leaderEntryTerm;
+    const string &entryCommand = argv[14];
+    long leaderCommit;
     try {
-        candidateTerm = std::stol(argv[2]);
-        candidateId = std::stoi(argv[4]);
-        candidateLastLogIndex = std::stol(argv[6]);
-        candidateLastLogTerm = std::stol(argv[8]);
+        leaderTerm = std::stol(argv[2]);
+        leaderId = std::stoi(argv[4]);
+        leaderPrevLogIndex = std::stol(argv[6]);
+        leaderPrevLogTerm = std::stol(argv[8]);
+        leaderEntryIndex = std::stol(argv[10]);
+        leaderEntryTerm = std::stol(argv[12]);
+        leaderCommit = std::stol(argv[16]);
     } catch (std::exception &e) {
         logFatal("receive request vote argc error, receive exception, what[%s]", e.what());
         exit(1);
     }
 
     long term = cluster->getTerm();
-    PersistenceFile *pf = cluster->getPersistenceFile();
-    Entry lastEntry;
-    pf->findLastEntry(lastEntry);
-    long lastLogIndex = lastEntry.getIndex();
-    long lastLogTerm = lastEntry.getTerm();
-
-    if (term < candidateTerm) {
-        logNotice("cluster cluster_id[%d] receive request vote has high term, to follow", 
-                cluster->getClusterId());
-        cluster->toFollow(candidateTerm);
-        term = cluster->getTerm();
+    if (cluster->isCandidate() || cluster->isLeader()) {
+        if (term < leaderTerm) {
+            logNotice("cluster cluster_id[%d] receive append entry with high term, to follow", 
+                    cluster->getClusterId());
+            cluster->toFollow(leaderTerm);
+            term = cluster->getTerm();
+        }
+        else {
+            client->initReplyHead(5);
+            client->appendReplyType(this->commandType());
+            client->appendReplyBody("replyappendentry");
+            client->appendReplyBody("term");
+            client->appendReplyBody(std::to_string(term));
+            client->appendReplyBody("success");
+            client->appendReplyBody("false");
+            return CABINET_OK;
+        }
     }
-    if ((term > candidateTerm) || 
-            (lastLogTerm > candidateLastLogTerm) || 
-            (lastLogIndex > candidateLastLogIndex) ||
-            (cluster->alreadyVotedFor() != -1)) {
+
+    if (!cluster->isFollower()) {
+        logFatal("only follower execute here");
+        exit(1);
+    }
+
+    cluster->updateTimeout();
+    Siblings *siblings = cluster->getSiblings();
+    siblings->setLeaderId(leaderId);
+    PersistenceFile *pf = cluster->getPersistenceFile();
+    Entry prevEntry;
+    if (pf->findEntry(leaderPrevLogIndex, prevEntry) == CABINET_ERR) {
         client->initReplyHead(5);
         client->appendReplyType(this->commandType());
-        client->appendReplyBody("replyRequestVote");
+        client->appendReplyBody("replyappendentry");
         client->appendReplyBody("term");
         client->appendReplyBody(std::to_string(term));
-        client->appendReplyBody("voteGranted");
+        client->appendReplyBody("success");
         client->appendReplyBody("false");
         return CABINET_OK;
     }
 
-    cluster->voteFor(candidateId);
+    if (prevEntry.getTerm() != leaderPrevLogTerm) {
+        pf->deleteEntryAfter(leaderPrevLogIndex);
+        client->initReplyHead(5);
+        client->appendReplyType(this->commandType());
+        client->appendReplyBody("replyappendentry");
+        client->appendReplyBody("term");
+        client->appendReplyBody(std::to_string(term));
+        client->appendReplyBody("success");
+        client->appendReplyBody("false");
+        return CABINET_OK;
+    }
+
+    if (leaderEntryIndex != 0 && leaderEntryTerm != 0) {
+        //append entry
+        Entry newEntry(leaderEntryIndex, leaderEntryTerm, entryCommand);
+        pf->appendToPF(newEntry);
+        long newCommitIndex = std::min(leaderCommit, cluster->getIndex());
+        cluster->setIndex(newCommitIndex);
+    }
     client->initReplyHead(5);
     client->appendReplyType(this->commandType());
-    client->appendReplyBody("replyRequestVote");
+    client->appendReplyBody("replyappendentry");
     client->appendReplyBody("term");
     client->appendReplyBody(std::to_string(term));
-    client->appendReplyBody("voteGranted");
-    client->appendReplyBody("true");
+    client->appendReplyBody("success");
     return CABINET_OK;
 }

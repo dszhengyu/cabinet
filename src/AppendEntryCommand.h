@@ -17,7 +17,7 @@ public:
     int operator[](Client *client) const;
 #endif
     bool isCommandValid() const {return true;}
-    int commandArgc() const {return 12;}
+    int commandArgc() const {return 16;}
     const char commandType() const {return 'r';}
     bool needPF() const {return false;}
 };

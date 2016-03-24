@@ -38,6 +38,10 @@ public:
     long getIndex() const {return this->commitIndex;}
     int alreadyVotedFor() const {return this->votedFor;}
     void voteFor(int candidateId) {this->votedFor = candidateId;}
+    void increaseVote() {++this->receiveVotes;}
+    bool achieveLeaderBaseline() const {return this->receiveVotes >= this->winVoteBaseline;}
+
+    Siblings *getSiblings() const {return this->siblings;}
 
     ~Cluster();
 private:

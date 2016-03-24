@@ -23,7 +23,12 @@ public:
     bool satisfyWorkingBaseling();
     int connectLostSiblings();
 
+    long getSiblingNextIndex(int clusterId);
+    int inscreaseSiblingNextIndex(int clusterId);
+    int inscreaseSiblingMatchIndex(int clusterId);
+
 private:
+    int validateClusterId(int clusterId);
     int clusterId;
     vector<int> clusterIdVector;
     map<int, string> ipMap;

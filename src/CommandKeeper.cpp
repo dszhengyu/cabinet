@@ -9,6 +9,8 @@
 
 #ifdef CABINET_CLUSTER
     #include "RequestVoteCommand.h"
+    #include "ReplyRequestVoteCommand.h"
+    #include "AppendEntryCommand.h"
 #endif
 
 CommandKeeper::CommandKeeper() :
@@ -22,6 +24,8 @@ void CommandKeeper::createClusterCommandMap() {
     logNotice("create cluster command map");
     commandMap["nomatch"] = new NoMatchCommand();
     commandMap["requestvote"] = new RequestVoteCommand();
+    commandMap["replyrequestvote"] = new ReplyRequestVoteCommand();
+    commandMap["appendentry"] = new AppendEntryCommand();
 }
 #endif
 

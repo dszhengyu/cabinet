@@ -147,3 +147,36 @@ int Siblings::connectLostSiblings() {
     }
     return CABINET_OK;
 }
+
+long Siblings::getSiblingNextIndex(int clusterId) {
+    if (this->validateClusterId(clusterId) == CABINET_ERR) {
+        logWarning("get sibling next index error with invalid id, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+    return this->nextIndexMap[clusterId];
+}
+
+int Siblings::inscreaseSiblingNextIndex(int clusterId) {
+    if (this->validateClusterId(clusterId) == CABINET_ERR) {
+        logWarning("get sibling next index error with invalid id, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+    ++this->nextIndexMap[clusterId];
+    return CABINET_OK;
+}
+
+int Siblings::inscreaseSiblingMatchIndex(int clusterId) {
+    if (this->validateClusterId(clusterId) == CABINET_ERR) {
+        logWarning("get sibling next index error with invalid id, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+    ++this->matchIndexMap[clusterId];
+    return CABINET_OK;
+}
+
+int Siblings::validateClusterId(int clusterId) {
+    if (this->clusterIdClientPtrMap.find(clusterId) == this->clusterIdClientPtrMap.end()) {
+        return CABINET_ERR;
+    }
+    return CABINET_OK;
+}

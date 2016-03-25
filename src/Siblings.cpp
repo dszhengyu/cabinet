@@ -157,7 +157,7 @@ long Siblings::getSiblingNextIndex(int clusterId) {
     return this->nextIndexMap[clusterId];
 }
 
-int Siblings::inscreaseSiblingNextIndex(int clusterId) {
+int Siblings::increaseSiblingNextIndex(int clusterId) {
     if (this->validateClusterId(clusterId) == CABINET_ERR) {
         logWarning("get sibling next index error with invalid id, id[%d]", clusterId);
         return CABINET_ERR;
@@ -166,12 +166,12 @@ int Siblings::inscreaseSiblingNextIndex(int clusterId) {
     return CABINET_OK;
 }
 
-int Siblings::inscreaseSiblingMatchIndex(int clusterId) {
+int Siblings::decreaseSiblingNextIndex(int clusterId) {
     if (this->validateClusterId(clusterId) == CABINET_ERR) {
         logWarning("get sibling next index error with invalid id, id[%d]", clusterId);
         return CABINET_ERR;
     }
-    ++this->matchIndexMap[clusterId];
+    --this->matchIndexMap[clusterId];
     return CABINET_OK;
 }
 
@@ -192,4 +192,12 @@ void Siblings::setMatchIndexBatch(long newMatchIndex) {
     for (int clusterId : this->clusterIdVector) {
         this->matchIndexMap[clusterId] = newMatchIndex;
     }
+}
+
+void Siblings::setMatchIndex(int clusterId, long newMatchIndex) {
+    if (this->validateClusterId(clusterId) == CABINET_ERR) {
+        logWarning("get sibling next index error with invalid id, id[%d]", clusterId);
+        return;
+    }
+    this->matchIndexMap[clusterId] = newMatchIndex;
 }

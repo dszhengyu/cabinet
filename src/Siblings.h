@@ -24,10 +24,11 @@ public:
     int connectLostSiblings();
 
     long getSiblingNextIndex(int clusterId);
-    int inscreaseSiblingNextIndex(int clusterId);
-    int inscreaseSiblingMatchIndex(int clusterId);
+    int increaseSiblingNextIndex(int clusterId);
+    int decreaseSiblingNextIndex(int clusterId);
     void setNextIndexBatch(long newNextIndex);
     void setMatchIndexBatch(long newMatchIndex);
+    void setMatchIndex(int clusterId, long newMatchIndex);
 
     int getLeaderId() const {return this->currentLeaderId;}
     void setLeaderId(int leaderId) {this->currentLeaderId = leaderId;}

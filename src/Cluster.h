@@ -44,6 +44,8 @@ public:
     void increaseVote() {++this->receiveVotes;}
     bool achieveLeaderBaseline() const {return this->receiveVotes >= this->winVoteBaseline;}
 
+    int setNewEntryIndexAndTerm(Entry &newEntry);
+    Parents *getParents() const {return this->parents;}
 
     ~Cluster();
 private:
@@ -54,6 +56,7 @@ private:
     long currentTerm;
     int votedFor;
     long commitIndex;
+    long lastEntryIndex;
     long lastApplied;
     Siblings *siblings;
     Children *children;

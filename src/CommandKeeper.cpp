@@ -1,16 +1,17 @@
 #include "CommandKeeper.h"
-#include "NoMatchCommand.h"
 
 #ifndef CABINET_CLUSTER
     #include "GetCommand.h"
     #include "SetCommand.h"
     #include "DelCommand.h"
+    #include "NoMatchCommand.h"
 #endif
 
 #ifdef CABINET_CLUSTER
     #include "RequestVoteCommand.h"
     #include "ReplyRequestVoteCommand.h"
     #include "AppendEntryCommand.h"
+    #include "ClusterDefaultCommand.h"
 #endif
 
 CommandKeeper::CommandKeeper() :
@@ -22,7 +23,7 @@ CommandKeeper::CommandKeeper() :
 #ifdef CABINET_CLUSTER
 void CommandKeeper::createClusterCommandMap() {
     logNotice("create cluster command map");
-    commandMap["nomatch"] = new NoMatchCommand();
+    commandMap["nomatch"] = new ClusterDefaultCommand();
     commandMap["requestvote"] = new RequestVoteCommand();
     commandMap["replyrequestvote"] = new ReplyRequestVoteCommand();
     commandMap["appendentry"] = new AppendEntryCommand();

@@ -25,9 +25,13 @@ CabinetCli::CabinetCli(const char *serverIp, int serverPort) :
     commandKeeperPtr(nullptr),
     connectFd(-1)
 {
-    this->prompt = this->serverIp + string(":") + std::to_string(this->serverPort) + string(">");
+    this->setPrompt();
     this->commandKeeperPtr = new CommandKeeper();
     this->commandKeeperPtr->createClientCommandMap();
+}
+
+void CabinetCli::setPrompt() {
+    this->prompt = this->serverIp + string(":") + std::to_string(this->serverPort) + string(">");
 }
 
 void CabinetCli::printPrompt() {
@@ -42,6 +46,14 @@ int CabinetCli::connectServer() {
         exit(1);
     }
     return CABINET_OK;
+}
+
+void CabinetCli::reSetServer(const string &newServerIp, const int newServerPort) {
+    this->serverIp = newServerIp;
+    this->serverPort = newServerPort;
+    close(this->connectFd);
+    this->connectServer();
+    this->setPrompt();
 }
 
 /*
@@ -186,6 +198,20 @@ int CabinetCli::receiveServerOutput() {
             this->resetAll();
             return CABINET_ERR;
         }
+    }
+
+    if (this->protocolStream.getCommandName() == "redirect") {
+        logDebug("cabinet cli receive redirect");
+        const vector<string> &argv = this->protocolStream.getReceiveArgv();
+        const string &newIP = argv[2];
+        int newPort;
+        try{
+            newPort = std::stoi(argv[4]);
+        } catch (std::exception &e) {
+            logFatal("cabinet cli get new port error, what[%s]", e.what());
+            exit(1);
+        }
+        this->reSetServer(newIP, newPort);
     }
     return CABINET_OK;
 }

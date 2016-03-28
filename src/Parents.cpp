@@ -4,7 +4,8 @@
 using std::find;
 
 Parents::Parents():
-    parentsQueue()
+    parentsQueue(),
+    dealingIndexParentsMap()
 {
 }
 
@@ -36,4 +37,15 @@ Parents::queueIter Parents::findParentsInQueue(ClusterClient *parents) {
     }
     logDebug("parents exist");
     return findResult;
+}
+
+int Parents::setDealingIndex(long dealingIndex, ClusterClient *parent) {
+    logDebug("set dealing index in parents");
+    if (this->findParentsInQueue(parent) == this->parentsQueue.end()) {
+        logWarning("set dealing index to no-exist parents");
+        return CABINET_ERR;
+    }
+
+    this->dealingIndexParentsMap[dealingIndex] = parent;
+    return CABINET_OK; 
 }

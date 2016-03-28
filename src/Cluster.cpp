@@ -12,6 +12,7 @@ Cluster::Cluster():
     currentTerm(0),
     votedFor(-1),
     commitIndex(0),
+    lastEntryIndex(0),
     lastApplied(0),
     siblings(nullptr),
     children(nullptr),
@@ -285,8 +286,8 @@ int Cluster::toLead() {
 
     Entry lastEntry;
     this->pf->findLastEntry(lastEntry);
-    long lastEntryIndex = lastEntry.getIndex();
-    this->siblings->setNextIndexBatch(lastEntryIndex);
+    this->lastEntryIndex = lastEntry.getIndex();
+    this->siblings->setNextIndexBatch(this->lastEntryIndex);
     this->siblings->setMatchIndexBatch(0);
 
     return CABINET_OK;
@@ -321,6 +322,12 @@ int Cluster::toCandidate() {
         }
     }
 
+    return CABINET_OK;
+}
+
+int Cluster::setNewEntryIndexAndTerm(Entry &entry) {
+    entry.setIndex(this->lastEntryIndex);    
+    entry.setTerm(this->currentTerm);
     return CABINET_OK;
 }
 

@@ -8,12 +8,12 @@ Entry::Entry():
 {
 }
 
-Entry::Entry(string content):
+Entry::Entry(const string &content):
     Entry(0, 0, content)
 {
 }
 
-Entry::Entry(long index, long term, string content):
+Entry::Entry(long index, long term, const string &content):
     index(index),
     term(term),
     content(content)

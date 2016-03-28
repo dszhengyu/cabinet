@@ -11,8 +11,8 @@ class Entry
 {   
 public:
     Entry();
-    explicit Entry(string content);
-    Entry(long index, long term, string content);
+    explicit Entry(const string &content);
+    Entry(long index, long term, const string &content);
 
     const long getIndex() const {return this->index;}
     void setIndex(long index) {this->index = index;}

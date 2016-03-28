@@ -18,10 +18,12 @@ public:
     int sendClientInput();
     int receiveServerOutput();
     int displayServerOutput();
-    void printPrompt();
     int connectServer();
 
 private:
+    void setPrompt();
+    void printPrompt();
+    void reSetServer(const string &newServerIp, const int newServerPort);
     int resetAll();
     string serverIp;
     int serverPort;

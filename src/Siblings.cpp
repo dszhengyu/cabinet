@@ -201,3 +201,9 @@ void Siblings::setMatchIndex(int clusterId, long newMatchIndex) {
     }
     this->matchIndexMap[clusterId] = newMatchIndex;
 }
+
+int Siblings::getLeaderIPAndPort(string &ip, int &port) {
+    ip = this->ipMap[this->currentLeaderId];
+    port = this->portMap[this->currentLeaderId];
+    return CABINET_OK;
+}

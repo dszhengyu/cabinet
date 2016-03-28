@@ -33,6 +33,8 @@ public:
     int getLeaderId() const {return this->currentLeaderId;}
     void setLeaderId(int leaderId) {this->currentLeaderId = leaderId;}
 
+    int getLeaderIPAndPort(string &ip, int &port);
+
 private:
     int validateClusterId(int clusterId);
     int clusterId;

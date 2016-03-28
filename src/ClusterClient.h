@@ -15,7 +15,6 @@ public:
 
 private:
     Cluster *cluster;
-    long dealingEntryIndex;
     int clusterId;
 };
 #endif

@@ -45,6 +45,7 @@ const string Configuration::operator[](const char *confName) {
 
 const string Configuration::operator[](const string &confName) {
     if (configuration.find(confName) == configuration.end()) {
+        logWarning("get undefine conf, conf_name[%s]", confName.c_str());
         return string("undefine");
     }
     return this->configuration[confName];

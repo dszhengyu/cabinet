@@ -28,6 +28,7 @@ public:
     //protocolstream proxy method
     int fillReceiveBuf();
     int fillReceiveBuf(const string &str);
+    int fillSendBuf(const string &str);
     int resolveReceiveBuf();
     const vector<string> &getReceiveArgv() const {return this->protocolStream.getReceiveArgv();}
     bool isReceiveComplete() const {return this->protocolStream.isReceiveComplete();}
@@ -47,6 +48,7 @@ public:
     static const char SERVER_CLIENT = 'S';
 
     int resetClient();
+    void getReadyToSendMessage();
     virtual int executeCommand() = 0;
     virtual ~Client();
 

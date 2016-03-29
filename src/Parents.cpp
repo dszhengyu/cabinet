@@ -49,3 +49,12 @@ int Parents::setDealingIndex(long dealingIndex, ClusterClient *parent) {
     this->dealingIndexParentsMap[dealingIndex] = parent;
     return CABINET_OK; 
 }
+
+ClusterClient *Parents::getParentsByDealingIndex(long dealingIndex) {
+   if (this->dealingIndexParentsMap.find(dealingIndex) == this->dealingIndexParentsMap.end()) {
+        return nullptr;
+   }
+   ClusterClient *parent = this->dealingIndexParentsMap[dealingIndex];
+   this->dealingIndexParentsMap.erase(dealingIndex);
+   return parent;
+}

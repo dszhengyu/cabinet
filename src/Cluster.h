@@ -39,6 +39,8 @@ public:
     long getTerm() const {return this->currentTerm;}
     long getIndex() const {return this->commitIndex;}
     void setIndex(long index) {this->commitIndex = index;}
+    long getLastApplied() const {return this->lastApplied;}
+    void increaseLastApplied() {++this->lastApplied;}
     int alreadyVotedFor() const {return this->votedFor;}
     void voteFor(int candidateId) {this->votedFor = candidateId;}
     void increaseVote() {++this->receiveVotes;}

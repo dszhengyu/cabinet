@@ -46,6 +46,10 @@ int Client::fillReceiveBuf(const string &str) {
     return this->protocolStream.fillReceiveBuf(str);
 }
 
+int Client::fillSendBuf(const string &str) {
+    return this->protocolStream.fillSendBuf(str);
+}
+
 int Client::resolveReceiveBuf() {
     if (this->protocolStream.resolveReceiveBuf() == CABINET_ERR) {
         logWarning("client client_id[%d] input format error, input_buf[%s]", 
@@ -55,16 +59,20 @@ int Client::resolveReceiveBuf() {
     return CABINET_OK;
 }
 
+void Client::getReadyToSendMessage() {
+    //在eventloop中删掉可读, 安装可写事件
+    this->eventPoll->removeFileEvent(this, READ_EVENT);
+    this->eventPoll->createFileEvent(this, WRITE_EVENT);
+}
+
 int Client::initReplyHead(int argc) {
     logDebug("init reply head");
     if (this->category != NORMAL_CLIENT) {
         logDebug("no normal client no reply");
         return CABINET_OK; 
     }
-    //在eventloop中删掉可读, 安装可写事件
-    this->eventPoll->removeFileEvent(this, READ_EVENT);
-    this->eventPoll->createFileEvent(this, WRITE_EVENT);
 
+    this->getReadyToSendMessage();
     this->protocolStream.initReplyHead(argc);
     return CABINET_OK;
 }

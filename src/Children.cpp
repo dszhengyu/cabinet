@@ -65,6 +65,7 @@ int Children::connectLostChildren() {
     
     //connect success
     ClusterClient *newChild = this->cluster->createNormalClient(connectFd, this->ip, this->port);
+    newChild->useWrapProtocolStream();
     newChild->setCategory(Client::SERVER_CLIENT);
     EventPoll *eventpoll = this->cluster->getEventPoll();
     if (eventpoll->createFileEvent(newChild, READ_EVENT) == CABINET_ERR) {

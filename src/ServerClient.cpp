@@ -18,6 +18,8 @@ int ServerClient::executeCommand() {
     const string &commandName = this->protocolStream.getCommandName();
     Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
 
+    logDebug("client category[%c]", this->category);
+
     //do pf
     if ((this->category != Client::LOCAL_PF_CLIENT) && 
             (pf != nullptr) &&

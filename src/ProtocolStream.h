@@ -10,6 +10,7 @@ class ProtocolStream
 {
 public:
     ProtocolStream(bool hasCommandType);
+    ProtocolStream(bool hasCommandType, bool wrapDefaultCommand, string wrapCommandName);
     //input section
     int fillReceiveBuf(const char *str, int strLen);
     int fillReceiveBuf(const string &str);
@@ -27,6 +28,7 @@ public:
     const string &getSendBuf() const {return this->outputBuf;}
     size_t getSendBufLen() const {return this->outputBuf.length();}
     void eraseSendBuf(size_t pos, size_t len) {this->outputBuf.erase(pos, len);}
+    int fillSendBuf(const string &str);
 
 private:
     bool isReceiveBufAvaliable() const;
@@ -39,5 +41,7 @@ private:
     bool receiveComplete;
     char commandType;
     string outputBuf;
+    bool wrapDefaultCommand;
+    string wrapCommandName;
 };
 #endif

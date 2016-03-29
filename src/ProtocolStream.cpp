@@ -13,7 +13,24 @@ ProtocolStream::ProtocolStream(bool hasCommandType):
     curArgvLen(-1),
     receiveComplete(false),
     commandType('\0'),
-    outputBuf()
+    outputBuf(),
+    wrapDefaultCommand(false),
+    wrapCommandName("none")
+{
+}
+
+ProtocolStream::ProtocolStream(bool hasCommandType, bool wrapDefaultCommand, string wrapCommandName):
+    hasCommandType(hasCommandType),
+    inputBuf(),
+    curCommandBuf(),
+    argc(-1),
+    argv(),
+    curArgvLen(-1),
+    receiveComplete(false),
+    commandType('\0'),
+    outputBuf(),
+    wrapDefaultCommand(wrapDefaultCommand),
+    wrapCommandName(wrapCommandName)
 {
 }
 
@@ -154,6 +171,13 @@ int ProtocolStream::resolveReceiveBuf() {
         }
     }
 
+    if (this->wrapDefaultCommand) {
+        logDebug("client wrap with default command, command_name[%s]", this->wrapCommandName.c_str());
+        this->argv.clear();
+        this->argv.push_back(this->wrapCommandName);
+        this->argv.push_back(this->curCommandBuf);
+    }
+
     return CABINET_OK;
 }
 
@@ -186,4 +210,8 @@ int ProtocolStream::appendReplyBody(const string &part) {
     return CABINET_OK;
 }
 
+int ProtocolStream::fillSendBuf(const string &str) {
+    this->outputBuf.append(str);
+    return CABINET_OK;    
+}
 

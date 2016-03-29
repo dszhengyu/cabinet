@@ -8,6 +8,7 @@ class ClusterClient: public Client
 {
 public:
     ClusterClient(long clientId, int fd, const string &ip, const int port, Cluster *cluster);
+    void useWrapProtocolStream() {this->protocolStream = ProtocolStream(false, true, "flushserver");}
     int executeCommand();
     Cluster *getClusterPtr() const {return this->cluster;}
     int getClusterId() const {return this->clusterId;}

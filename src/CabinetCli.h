@@ -19,10 +19,10 @@ public:
     int receiveServerOutput();
     int displayServerOutput();
     int connectServer();
+    void printPrompt();
 
 private:
     void setPrompt();
-    void printPrompt();
     void reSetServer(const string &newServerIp, const int newServerPort);
     int resetAll();
     string serverIp;

@@ -27,6 +27,7 @@ void Server::initConfig() {
         this->serverId = std::stoi(conf["SERVER_ID"]);
         this->port = std::stoi(conf["SERVER_PORT"]);;
         this->pfName = conf["SERVER_PF_NAME"];
+        this->allowPF = conf["SERVER_PF"];
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());
         exit(1);
@@ -57,14 +58,14 @@ void Server::init() {
 
     this->db = new DataBase();
 
-    if (PF) {
+    if (this->allowPF == string("true")) {
         logNotice("persistence is require");
-        this->pf = new PersistenceFile(this->pfName, this->pfName + std::to_string(this->serverId));
+        this->pf = new PersistenceFile(this->pfName, this->pfName + ".temp");
         this->importPF();
     }
     logNotice("init server done");
     #include "CabinetLogo.h"
-    logNotice(cabinet_server_logo, this->port, ((PF == true) ? "enabled" : "disabled"));
+    logNotice(cabinet_server_logo, this->port, this->allowPF.c_str());
 }
 
 Client *Server::createClient(int listenFd) {

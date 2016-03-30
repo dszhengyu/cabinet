@@ -1,8 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-const bool PF = true;
-
 #include "Cabinet.h"
 #include "DataBase.h"
 #include "Const.h"
@@ -26,6 +24,7 @@ private:
     long serverId;
     DataBase *db;
     string pfName;
+    string allowPF;
 };
 
 #endif

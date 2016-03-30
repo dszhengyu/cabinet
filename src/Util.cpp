@@ -125,7 +125,7 @@ int Util::connectTcp(const char *ip, int port) {
     }
     
     if (connect(connectFd, (struct sockaddr *)&clientAddr, sizeof(clientAddr)) < 0) {
-        logWarning("Connect Server Error, IP[%s], port[%d]", ip, port);
+        //logWarning("Connect Server Error, IP[%s], port[%d]", ip, port);
         return CABINET_ERR;
     }
     return connectFd;

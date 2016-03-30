@@ -71,6 +71,7 @@ private:
     int winVoteBaseline;
     int clusterPort;
     int clusterListenFd;
+    string pfName;
 
     static const char LEADER = 'L';
     static const char FOLLOWER = 'F';

@@ -37,6 +37,7 @@ public:
 
 private:
     int validateClusterId(int clusterId);
+    int getSiblingClusterId(ClusterClient *sibling);
     int clusterId;
     vector<int> clusterIdVector;
     map<int, string> ipMap;
@@ -47,5 +48,6 @@ private:
     map<int, ClusterClient*> clusterIdClientPtrMap;
     Cluster *cluster;
     int currentLeaderId;
+    map<string, int> ipPortClusterIdMap;
 };
 #endif

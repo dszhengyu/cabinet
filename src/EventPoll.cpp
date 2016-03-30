@@ -26,7 +26,7 @@ int EventPoll::initEventPoll() {
  * brief: 添加文件事件, 在epoll中添加, 在map中也需要添加
  */
 int EventPoll::createFileEvent(Client *client, int eventType) {
-    logDebug("event poll create file event, client client_id[%d], eventType[%d]", client->getClientId(), eventType);
+    //logDebug("event poll create file event, client client_id[%d], eventType[%d]", client->getClientId(), eventType);
     //alias the true map to edit
     fileeventmap_t *mapToEdit = nullptr;
     if (eventType == READ_EVENT) {
@@ -54,7 +54,7 @@ int EventPoll::createFileEvent(Client *client, int eventType) {
  * brief: remove file event both in epoll and map
  */
 int EventPoll::removeFileEvent(Client *client, int eventType) {
-    logDebug("event poll remove file event, client client_id[%d], eventType[%d]", client->getClientId(), eventType);
+    //logDebug("event poll remove file event, client client_id[%d], eventType[%d]", client->getClientId(), eventType);
     //alias the true map to edit
     fileeventmap_t *mapToEdit = nullptr;
     if (eventType == READ_EVENT) {
@@ -78,7 +78,7 @@ int EventPoll::removeFileEvent(Client *client, int eventType) {
 }
 
 int EventPoll::pollListenFd(int listenFd) {
-    logDebug("event poll poll listen fd[%d]", listenFd);
+    //logDebug("event poll poll listen fd[%d]", listenFd);
     if (this->listenFdSet.find(listenFd) != this->listenFdSet.end()) {
         logWarning("listen fd already added in event poll, listen fd[%d]", listenFd);
         return CABINET_ERR;
@@ -94,7 +94,7 @@ int EventPoll::fileEventOperation(int fd, int eventType, int opType) {
     struct epoll_event ee;
     ee.events = pollEvent;
     ee.data.fd = fd;
-    logDebug("epoll_ctl fd[%d], event_type[%d], op_type[%d]", fd, eventType, opType);
+    //logDebug("epoll_ctl fd[%d], event_type[%d], op_type[%d]", fd, eventType, opType);
     if (epoll_ctl(this->eventPollFd, op, fd, &ee) != 0) {
         logFatal("epoll_ctl error, fd[%d], event_type[%d], op_type[%d], errno[%d]", fd, eventType, opType, errno);
         exit(1);
@@ -111,9 +111,9 @@ int EventPoll::processEvent() {
 
         //do file event
         struct epoll_event events[this->EPOLL_SIZE];
-        logDebug("###epoll wait");
+        //logDebug("###epoll wait");
         int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, timeout);
-        logDebug("###event comes~ event_number[%d]", eventNumber);
+        //logDebug("###event comes~ event_number[%d]", eventNumber);
         if (eventNumber == 0) {
             continue;
         }
@@ -125,7 +125,7 @@ int EventPoll::processEvent() {
             //1. 创建client
             //2. 将client监听可读加入eventpoll
             if ((this->listenFdSet.find(eventFd) != this->listenFdSet.end()) && (eventType & EPOLLIN)) {
-                logDebug("event poll listen fd readable");
+                //logDebug("event poll listen fd readable");
                 Client *newClient = this->cabinet->createClient(eventFd);
                 if (newClient == nullptr) {
                     logNotice("create client error");
@@ -142,7 +142,7 @@ int EventPoll::processEvent() {
             //
             //notice: client在任意步骤都可能失败, 若失败, 清理client的痕迹
             if (eventType & EPOLLIN) {
-                logDebug("event poll client fd readable");
+                //logDebug("event poll client fd readable");
                 if (this->readFileEventMap.find(eventFd) == this->readFileEventMap.end()) {
                     logWarning("Client lost in read map, maybe deleted before");
                     continue;
@@ -174,7 +174,7 @@ int EventPoll::processEvent() {
             //client可写
             //1. 发送client数据
             if (eventType & EPOLLOUT) {
-                logDebug("event poll client fd writeable");
+                //logDebug("event poll client fd writeable");
                 if (this->writeFileEventMap.find(eventFd) == this->writeFileEventMap.end()) {
                     logWarning("Client lost in read map, maybe deleted before");
                     continue;
@@ -193,7 +193,7 @@ int EventPoll::processEvent() {
 }
 
 int EventPoll::deleteClient(Client *client) {
-    logWarning("event poll delete client client_id[%d]", client->getClientId());
+    //logDebug("event poll delete client client_id[%d]", client->getClientId());
     this->cabinet->deleteClient(client);
     this->removeFileEvent(client, READ_EVENT);
     this->removeFileEvent(client, WRITE_EVENT);

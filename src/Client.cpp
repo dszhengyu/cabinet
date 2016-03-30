@@ -66,9 +66,9 @@ void Client::getReadyToSendMessage() {
 }
 
 int Client::initReplyHead(int argc) {
-    logDebug("init reply head");
-    if (this->category != NORMAL_CLIENT) {
-        logDebug("no normal client no reply");
+    //logDebug("init reply head");
+    if (this->category == LOCAL_PF_CLIENT) {
+        logDebug("local pf client no reply");
         return CABINET_OK; 
     }
 
@@ -78,9 +78,9 @@ int Client::initReplyHead(int argc) {
 }
 
 int Client::appendReplyType(const char commandType) {
-    logDebug("append reply type");
-    if (this->category != NORMAL_CLIENT) {
-        logDebug("no normal client no reply");
+    //logDebug("append reply type");
+    if (this->category == LOCAL_PF_CLIENT) {
+        logDebug("local pf client no reply");
         return CABINET_OK; 
     }
     this->protocolStream.appendCommandType(commandType);
@@ -88,9 +88,9 @@ int Client::appendReplyType(const char commandType) {
 }
 
 int Client::appendReplyBody(const string &part) {
-    logDebug("append reply body");
-    if (this->category != NORMAL_CLIENT) {
-        logDebug("no normal client no reply");
+    //logDebug("append reply body");
+    if (this->category == LOCAL_PF_CLIENT) {
+        logDebug("local pf client no reply");
         return CABINET_OK; 
     }
     this->protocolStream.appendReplyBody(part);
@@ -106,8 +106,8 @@ int Client::appendReplyBody(const char *part) {
  */
 int Client::sendReply() {
     logDebug("sending reply");
-    if (this->category != NORMAL_CLIENT) {
-        logDebug("no normal client no reply");
+    if (this->category == LOCAL_PF_CLIENT) {
+        logDebug("local pf client no reply");
         return CABINET_OK; 
     }
     logDebug("protocol stream send \nbuf[\n%s]\n buf_len[%d]", 
@@ -129,7 +129,7 @@ int Client::sendReply() {
             return CABINET_ERR;
         }
     }
-    logDebug("send [%d] byte", nWrite);
+    //logDebug("send [%d] byte", nWrite);
     this->protocolStream.eraseSendBuf(0, nWrite);
     if (this->protocolStream.getSendBufLen() == 0) {
         //delete file event loop for write

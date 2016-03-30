@@ -23,6 +23,7 @@ public:
     Client(long clientId, int fd, const string &ip, const int port, Cabinet *cabinet);
     long getClientId() const {return this->clientId;}
     const string &getIp() const {return this->ip;}
+    const int getPort() const {return this->port;}
     int getClientFd() const {return this->fd;}
 
     //protocolstream proxy method

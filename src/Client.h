@@ -33,6 +33,7 @@ public:
     int resolveReceiveBuf();
     const vector<string> &getReceiveArgv() const {return this->protocolStream.getReceiveArgv();}
     bool isReceiveComplete() const {return this->protocolStream.isReceiveComplete();}
+    bool isReceiveBufAvaliable() const {return this->protocolStream.isReceiveBufAvaliable();}
     const string &getCurCommandBuf() const {return this->protocolStream.getCurCommandBuf();}
     int sendReply();
     int initReplyHead(int argc);

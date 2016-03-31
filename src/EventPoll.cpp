@@ -8,12 +8,14 @@ EventPoll::EventPoll(Cabinet *cabinet):
     cabinet(cabinet),
     readFileEventMap(),
     writeFileEventMap(),
-    listenFdSet()
+    listenFdSet(),
+    readEventClientList()
 {
 
 }
 
 int EventPoll::initEventPoll() {
+    logDebug("init event poll");
     int eventPollFd = epoll_create(this->EPOLL_SIZE);
     if (eventPollFd == -1) {
         logFatal("create epoll error");
@@ -67,7 +69,7 @@ int EventPoll::removeFileEvent(Client *client, int eventType) {
 
     //find if the event is already delete
     if (mapToEdit->find(client->getClientFd()) == mapToEdit->end()) {
-        logWarning("file event already deleted, client_id[%d]", client->getClientId());
+        //logWarning("file event already deleted, client_id[%d]", client->getClientId());
         return CABINET_OK;
     }
 
@@ -154,20 +156,7 @@ int EventPoll::processEvent() {
                     this->deleteClient(processingClient);
                     continue;
                 }
-
-                if (processingClient->resolveReceiveBuf() == CABINET_ERR) {
-                    logWarning("client client_id[%d] resolve input buf error, close it", processingClient->getClientId());
-                    this->deleteClient(processingClient);
-                    continue;
-                }
-
-                if (processingClient->isReceiveComplete() == true) {
-                    if (processingClient->executeCommand() == CABINET_ERR) {
-                        logWarning("client client_id[%d] execute command error, close it", processingClient->getClientId());
-                        this->deleteClient(processingClient);
-                        continue;
-                    }
-                }
+                this->readEventClientList.push_back(processingClient);
                 continue;
             }
             
@@ -186,6 +175,29 @@ int EventPoll::processEvent() {
                     continue;
                 }
                 continue;
+            }
+        }
+
+        //deal with read event
+        while (!this->readEventClientList.empty()) {
+            Client *processingClient = this->readEventClientList.front();
+            this->readEventClientList.pop_front();
+            if (processingClient->resolveReceiveBuf() == CABINET_ERR) {
+                logWarning("client client_id[%d] resolve input buf error, close it", processingClient->getClientId());
+                this->deleteClient(processingClient);
+                continue;
+            }
+
+            if (processingClient->isReceiveComplete() == true) {
+                if (processingClient->executeCommand() == CABINET_ERR) {
+                    logWarning("client client_id[%d] execute command error, close it", processingClient->getClientId());
+                    this->deleteClient(processingClient);
+                    continue;
+                }
+            }
+
+            if (processingClient->isReceiveBufAvaliable()) {
+                this->readEventClientList.push_back(processingClient);
             }
         }
     }

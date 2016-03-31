@@ -36,6 +36,8 @@ public:
     int getLeaderIPAndPort(string &ip, int &port);
     int confirmConnectSibling(ClusterClient *sibling);
 
+    int shutDown();
+
 private:
     int validateClusterId(int clusterId);
     int getSiblingClusterId(ClusterClient *sibling);

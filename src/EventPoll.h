@@ -6,12 +6,14 @@
 #include <string>
 #include <map>
 #include <set>
+#include <list>
 class Cabinet;
 class Client;
 
 using std::string;
 using std::map;
 using std::set;
+using std::list;
 
 class EventPoll
 {
@@ -33,6 +35,7 @@ private:
     fileeventmap_t writeFileEventMap;
     int eventPollFd;
     set<int> listenFdSet;
+    list<Client *> readEventClientList;
     const int ADD_EVENT = 0;
     const int DEL_EVENT = 1;
     const int MOD_EVENT = 2;

@@ -11,13 +11,13 @@ PersistenceFile::PersistenceFile(const string &pfName, const string &tmpPFName):
 }
 
 int PersistenceFile::appendToPF(const Entry &entry) {
-    logDebug("append entry to pf");
+    //logDebug("append entry to pf");
     this->pFOut << entry;
     return CABINET_OK;
 }
 
 int PersistenceFile::findEntry(const long index, Entry &entry) {
-    logDebug("find entry, index[%ld]", index);
+    //logDebug("find entry, index[%ld]", index);
     this->resetFileStream();
     while (this->getNextPFEntry(entry) != CABINET_ERR) {
         if (entry.getIndex() == index) {
@@ -28,7 +28,7 @@ int PersistenceFile::findEntry(const long index, Entry &entry) {
 }
 
 int PersistenceFile::findLastEntry(Entry &entry) {
-    logDebug("find last entry");
+    //logDebug("find last entry");
     if (this->resetFileStream() == CABINET_ERR) {
         logNotice("empty pf");
         return CABINET_ERR;
@@ -72,7 +72,7 @@ int PersistenceFile::deleteEntryAfter(long index) {
 }
 
 int PersistenceFile::getNextPFEntry(Entry &entry) {
-    logDebug("get next pf entry");
+    //logDebug("get next pf entry");
     if (!this->pFIn.good()) {
         return CABINET_ERR;
     }

@@ -15,6 +15,7 @@ public:
     static int acceptTcp(const int listenfd, string &ip, int &port);
     static int connectTcp(const char *ip, int port);
     static int daemonize();
+    static int closeConnectFd(int connectFd);
 };
 
 #endif

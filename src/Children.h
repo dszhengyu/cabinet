@@ -18,6 +18,7 @@ public:
     bool satisfyWorkingBaseling() const;
     int connectLostChildren();
     ClusterClient *getOnlineChildren() const;
+    int shutDown();
 private:
     Cluster *cluster;
     ClusterClient *child;

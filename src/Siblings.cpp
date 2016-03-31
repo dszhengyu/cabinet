@@ -106,13 +106,15 @@ int Siblings::addSiblings(ClusterClient *sibling) {
 
 int Siblings::deleteSiblings(ClusterClient *sibling) {
     int clusterId = sibling->getClusterId();
+    logDebug("cluster cluster_id[%d] trying to delete cluster[%d]", this->clusterId, clusterId);
     if (this->clusterIdClientPtrMap.find(clusterId) == this->clusterIdClientPtrMap.end()) {
-        logWarning("cluster cluster_id[%d] trying to delete cluster with invalid id, id[%d]", this->clusterId, clusterId);
+        logWarning("cluster cluster_id[%d] trying to delete cluster with invalid id, cluster_id[%d]", this->clusterId, clusterId);
         return CABINET_ERR;
     }
 
     if (this->clusterIdClientPtrMap[clusterId] == nullptr) {
-        logFatal("cluster cluster_id[%d] trying to delete cluster while it is already deleted, id[%d]", this->clusterId, clusterId);
+        logFatal("cluster cluster_id[%d] trying to delete cluster while it is already deleted, cluster_id[%d]", 
+                this->clusterId, clusterId);
         return CABINET_ERR;
     }
 
@@ -120,6 +122,7 @@ int Siblings::deleteSiblings(ClusterClient *sibling) {
     this->connectStatus[clusterId] = false;
     this->nextIndexMap[clusterId] = 0;
     this->matchIndexMap[clusterId] = 0;
+    this->connectTrying[clusterId] = false;
 
     return CABINET_OK;
 }
@@ -273,5 +276,16 @@ int Siblings::confirmConnectSibling(ClusterClient *sibling) {
     }
     this->connectStatus[siblingId] = true;
     this->connectTrying[siblingId] = false;
+    return CABINET_OK;
+}
+
+int Siblings::shutDown() {
+    for (int clusterId : this->clusterIdVector) {
+        if (this->connectStatus[clusterId] == false) {
+            continue;
+        }
+        int connectFd = this->clusterIdClientPtrMap[clusterId]->getClientFd();
+        Util::closeConnectFd(connectFd);
+    }
     return CABINET_OK;
 }

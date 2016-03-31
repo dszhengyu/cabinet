@@ -45,6 +45,7 @@ void Server::init() {
 
     while ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
         logFatal("server listen on port[%d] error, keep trying", this->port);
+        sleep(5);
     }
 
     this->eventPoll = new EventPoll(this);

@@ -18,6 +18,7 @@ int ClusterClient::executeCommand() {
         logWarning("cluster client client_id[%d] execute command error", this->getClientId());
         return CABINET_ERR;
     }
+    this->protocolStream.getReadyForNextCommand();
     return CABINET_OK;
 }
 

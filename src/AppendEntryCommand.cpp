@@ -26,6 +26,8 @@ int AppendEntryCommand::operator>>(Client *client) const {
     }
 
     int clientId = clusterClient->getClusterId();
+    int leaderId = cluster->getClusterId();
+    logDebug("cluster cluster_id[%d] append entry to cluster[%d]", leaderId, clientId);
     Siblings *siblings = cluster->getSiblings();
     long nextEntryIndex = siblings->getSiblingNextIndex(clientId);
     if (nextEntryIndex == CABINET_ERR) {
@@ -35,7 +37,6 @@ int AppendEntryCommand::operator>>(Client *client) const {
 
     long leaderTerm = cluster->getTerm();
     long commitIndex = cluster->getIndex();
-    int leaderId = cluster->getClusterId();
     PersistenceFile *pf = cluster->getPersistenceFile();
     Entry lastEntry;
     pf->findLastEntry(lastEntry);
@@ -105,6 +106,7 @@ int AppendEntryCommand::operator>>(Client *client) const {
 int AppendEntryCommand::operator[](Client *client) const {
     ClusterClient *clusterClient = (ClusterClient *) client;
     Cluster *cluster = clusterClient->getClusterPtr();
+    int followerId = cluster->getClusterId();
 
     const vector<string> &argv = clusterClient->getReceiveArgv();
     if (argv.size() != (unsigned int)(this->commandArgc() + 1)) {
@@ -133,6 +135,7 @@ int AppendEntryCommand::operator[](Client *client) const {
         exit(1);
     }
 
+    logDebug("cluster cluster_id[%d] receive append entry from cluster[%d]", followerId, leaderId);
     long term = cluster->getTerm();
     if (cluster->isCandidate() || cluster->isLeader()) {
         if (term < leaderTerm) {

@@ -47,6 +47,8 @@ void Cluster::initConfig() {
         exit(1);
     }
 
+    logNotice("cluster cluster_id[%d] put into use", this->clusterId);
+
     this->siblings = new Siblings(this);
     if (this->siblings->recognizeSiblings(conf) == CABINET_ERR) {
         logFatal("cluster cluster_id[%d] recognize siblings error, exit", this->clusterId);
@@ -75,6 +77,7 @@ void Cluster::init() {
 
     while ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
         logFatal("cluster cluster_id[%d] listen on port[%d] error, keep trying", this->clusterId, this->port);
+        sleep(5);
     }
    
     this->eventPoll = new EventPoll(this);
@@ -137,11 +140,13 @@ int Cluster::deleteClient(Client *client) {
         return CABINET_OK;
     }
     if (client->getCategory() == Client::CLUSTER_CLIENT) {
-        if (this->siblings->deleteSiblings((ClusterClient *)client) == CABINET_ERR) {
-            logWarning("cluster cluster_id[%d] delete cluster client error", this->clusterId);
+        ClusterClient *clusterClient = (ClusterClient *)client;
+        int siblingId = clusterClient->getClusterId();
+        if (this->siblings->deleteSiblings(clusterClient) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] delete cluster[%d] error", this->clusterId, siblingId);
             return CABINET_ERR;
         }
-        logNotice("cluster cluster_id[%d] delete cluster client", this->clusterId);
+        logNotice("cluster cluster_id[%d] delete cluster[%d]", this->clusterId, siblingId);
         return CABINET_OK;
     }
     if (client->getCategory() == Client::SERVER_CLIENT) {
@@ -194,6 +199,15 @@ int Cluster::cron() {
         return CABINET_OK;
     }
 
+    //flush command to children
+    ClusterClient *children = this->children->getOnlineChildren();
+    if (children != nullptr) {
+        Command &flushServerCommand = this->commandKeeperPtr->selectCommand("flushserver");
+        if ((flushServerCommand >> children) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] flush server error", this->clusterId);
+        }
+    }
+
     //do thing each role should do
     if (this->isLeader()) {
         logDebug("cluster cluster_id[%d] work as leader", this->clusterId);
@@ -207,12 +221,6 @@ int Cluster::cron() {
             }
         }
 
-        //flush command to children
-        ClusterClient *children = this->children->getOnlineChildren();
-        Command &flushServerCommand = this->commandKeeperPtr->selectCommand("flushserver");
-        if ((flushServerCommand >> children) == CABINET_ERR) {
-            logWarning("cluster cluster_id[%d] flush server error", this->clusterId);
-        }
         return CABINET_OK;
     }
 
@@ -332,6 +340,14 @@ int Cluster::toCandidate() {
 int Cluster::setNewEntryIndexAndTerm(Entry &entry) {
     entry.setIndex(this->lastEntryIndex);    
     entry.setTerm(this->currentTerm);
+    return CABINET_OK;
+}
+
+int Cluster::shutDown() {
+    logFatal("cluster cluster_id[%d] shut down ing", this->clusterId);
+    this->siblings->shutDown();
+    this->children->shutDown();
+    this->parents->shutDown();
     return CABINET_OK;
 }
 

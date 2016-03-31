@@ -17,6 +17,7 @@ int RequestVoteCommand::operator>>(Client *client) const {
         exit(1);
     }
 
+    int ticketHolderId = clusterClient->getClusterId();
     long term = cluster->getTerm();
     int candidateId = cluster->getClusterId();
     PersistenceFile *pf = cluster->getPersistenceFile();
@@ -25,6 +26,7 @@ int RequestVoteCommand::operator>>(Client *client) const {
     long lastLogIndex = lastEntry.getIndex();
     long lastLogTerm = lastEntry.getTerm();
 
+    logDebug("cluster cluster_id[%d] request vote from cluster[%d]", candidateId, ticketHolderId);
     client->initReplyHead(9);
     client->appendReplyType(this->commandType());
     client->appendReplyBody("requestvote");
@@ -51,6 +53,7 @@ int RequestVoteCommand::operator>>(Client *client) const {
 int RequestVoteCommand::operator[](Client *client) const {
     ClusterClient *clusterClient = (ClusterClient *) client;
     Cluster *cluster = clusterClient->getClusterPtr();
+    int ticketHolderId = cluster->getClusterId();
 
     const vector<string> &argv = clusterClient->getReceiveArgv();
     if (argv.size() != (unsigned int)(this->commandArgc() + 1)) {
@@ -71,6 +74,7 @@ int RequestVoteCommand::operator[](Client *client) const {
         logFatal("receive request vote argc error, receive exception, what[%s]", e.what());
         exit(1);
     }
+    logDebug("cluster cluster_id[%d] receive request vote from cluster[%d]", ticketHolderId, candidateId);
 
     long term = cluster->getTerm();
     PersistenceFile *pf = cluster->getPersistenceFile();

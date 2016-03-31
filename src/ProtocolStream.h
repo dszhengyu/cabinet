@@ -17,10 +17,12 @@ public:
     int resolveReceiveBuf();
     const char * getReceiveBuf() const {return this->inputBuf.c_str();}
     bool isReceiveComplete() const {return this->receiveComplete;}
+    bool isReceiveBufAvaliable() const;
     const string &getCommandName() const {return this->argv[0];}
     const vector<string> &getReceiveArgv() const {return this->argv;}
     const string &getCurCommandBuf() const {return this->curCommandBuf;}
     int clear();
+    int getReadyForNextCommand();
     //output section
     int initReplyHead(int argc);
     int appendReplyBody(const string &);
@@ -31,7 +33,6 @@ public:
     int fillSendBuf(const string &str);
 
 private:
-    bool isReceiveBufAvaliable() const;
     bool hasCommandType;
     string inputBuf;
     string curCommandBuf;

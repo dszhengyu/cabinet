@@ -58,7 +58,7 @@ int Util::listenTcp(int port) {
     serverAddr.sin_port = htons(port);
 
     if (bind(listenfd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        logFatal("bind error!");
+        logFatal("bind error! error_desc[%s]", strerror(errno));
         return CABINET_ERR;
     }   
 
@@ -136,7 +136,7 @@ int Util::daemonize() {
         return CABINET_ERR;
     }
     else if (pid1 > 0) {
-        logDebug("first parent exit");
+        //logDebug("first parent exit");
         exit(0);
     }
     setsid();
@@ -147,7 +147,7 @@ int Util::daemonize() {
         return CABINET_ERR;
     }
     else if (pid2 > 0) {
-        logDebug("second parent exit");
+        //logDebug("second parent exit");
         exit(0);
     }
 
@@ -161,5 +161,10 @@ int Util::daemonize() {
         }
     }
     logNotice("daemonize done. pid[%d]", getpid());
+    return CABINET_OK;
+}
+
+int Util::closeConnectFd(int connectFd) {
+    close(connectFd);
     return CABINET_OK;
 }

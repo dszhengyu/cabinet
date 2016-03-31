@@ -35,7 +35,7 @@ ProtocolStream::ProtocolStream(bool hasCommandType, bool wrapDefaultCommand, str
 }
 
 int ProtocolStream::clear() {
-    this->inputBuf.clear();
+    //this->inputBuf.clear();
     this->curCommandBuf.clear();
     this->argc = -1;
     this->argv.clear();
@@ -43,6 +43,16 @@ int ProtocolStream::clear() {
     this->receiveComplete = false;
     this->commandType = '\0';
     this->outputBuf.clear();
+    return CABINET_OK;
+}
+
+int ProtocolStream::getReadyForNextCommand() {
+    this->curCommandBuf.clear();
+    this->argc = -1;
+    this->argv.clear();
+    this->curArgvLen = -1;
+    this->receiveComplete = false;
+    this->commandType = '\0';
     return CABINET_OK;
 }
 

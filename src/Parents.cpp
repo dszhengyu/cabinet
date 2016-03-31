@@ -1,5 +1,6 @@
 #include "Parents.h"
 #include "Const.h"
+#include "Util.h"
 #include <algorithm>
 using std::find;
 
@@ -61,4 +62,12 @@ ClusterClient *Parents::getParentsByDealingIndex(long dealingIndex) {
    ClusterClient *parent = this->dealingIndexParentsMap[dealingIndex];
    this->dealingIndexParentsMap.erase(dealingIndex);
    return parent;
+}
+
+int Parents::shutDown() {
+    for (ClusterClient *parent : this->parentsQueue) {
+        int connectFd = parent->getClientFd();
+        Util::closeConnectFd(connectFd);
+    }
+    return CABINET_OK;
 }

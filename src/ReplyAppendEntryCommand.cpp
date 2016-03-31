@@ -15,6 +15,9 @@
 int ReplyAppendEntryCommand::operator[](Client *client) const {
     ClusterClient *clusterClient = (ClusterClient *) client;
     Cluster *cluster = clusterClient->getClusterPtr();
+    int leaderId = cluster->getClusterId();
+    int followerId = clusterClient->getClusterId();
+    logNotice("cluster cluster_id[%d] receive reply append entry from cluster[%d]", leaderId, followerId);
 
     const vector<string> &argv = clusterClient->getReceiveArgv();
     if (argv.size() != (unsigned int)(this->commandArgc() + 1)) {
@@ -23,7 +26,8 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
     }   
 
     if (!cluster->isLeader()) {
-        logNotice("receive stale message, not a leader now, ignore");
+        logNotice("cluster cluster_id[%d] receive reply append entry from cluster[%d], not a leader now, ignore",
+                leaderId, followerId);
         return CABINET_OK;
     }
 
@@ -38,25 +42,24 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
 
     long term = cluster->getTerm();
     if (term < followerTerm) {
-        logNotice("cluster cluster_id[%d] receive reply append entry with high term, to follow", 
-                cluster->getClusterId());
+        logNotice("cluster cluster_id[%d] receive reply append entry with high term, to follow", leaderId);
         cluster->toFollow(followerTerm);
     }
 
     Siblings *siblings = cluster->getSiblings();
     if (result == string("false")) {
-        long currentNextIndex = siblings->getSiblingNextIndex(clusterClient->getClusterId());
+        long currentNextIndex = siblings->getSiblingNextIndex(followerId);
         if (currentNextIndex == 1) {
             logWarning("can not decrease next index to 0, program fail");
             return CABINET_OK;
         }
-        siblings->decreaseSiblingNextIndex(clusterClient->getClusterId());
+        siblings->decreaseSiblingNextIndex(followerId);
         return CABINET_OK;
     }
     else {
-        long newMatchIndex = siblings->getSiblingNextIndex(clusterClient->getClusterId());
-        siblings->increaseSiblingNextIndex(clusterClient->getClusterId());
-        siblings->setMatchIndex(clusterClient->getClusterId(), newMatchIndex);
+        long newMatchIndex = siblings->getSiblingNextIndex(followerId);
+        siblings->increaseSiblingNextIndex(followerId);
+        siblings->setMatchIndex(followerId, newMatchIndex);
         return CABINET_OK;
     }
 }

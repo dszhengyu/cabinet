@@ -49,6 +49,7 @@ public:
     int setNewEntryIndexAndTerm(Entry &newEntry);
     Parents *getParents() const {return this->parents;}
 
+    int shutDown();
     ~Cluster();
 private:
     const char getClusterRole() const {return this->role;}

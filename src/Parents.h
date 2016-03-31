@@ -19,6 +19,7 @@ public:
     int deleteParents(ClusterClient *parents);
     int setDealingIndex(long dealingIndex, ClusterClient *parent);
     ClusterClient *getParentsByDealingIndex(long dealingIndex);
+    int shutDown();
 private:
     queueIter findParentsInQueue(ClusterClient *);
     deque<ClusterClient *> parentsQueue;

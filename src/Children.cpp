@@ -87,3 +87,9 @@ ClusterClient *Children::getOnlineChildren() const {
     }
     return nullptr;
 }
+
+int Children::shutDown() {
+    int connectFd = this->child->getClientFd();
+    Util::closeConnectFd(connectFd);
+    return CABINET_OK;
+}

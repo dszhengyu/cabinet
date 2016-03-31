@@ -27,7 +27,7 @@ int RequestVoteCommand::operator>>(Client *client) const {
 
     client->initReplyHead(9);
     client->appendReplyType(this->commandType());
-    client->appendReplyBody("requestVote");
+    client->appendReplyBody("requestvote");
     client->appendReplyBody("term");
     client->appendReplyBody(std::to_string(term));
     client->appendReplyBody("candidateId");
@@ -91,7 +91,7 @@ int RequestVoteCommand::operator[](Client *client) const {
             (cluster->alreadyVotedFor() != -1)) {
         client->initReplyHead(5);
         client->appendReplyType(this->commandType());
-        client->appendReplyBody("replyRequestVote");
+        client->appendReplyBody("replyrequestvote");
         client->appendReplyBody("term");
         client->appendReplyBody(std::to_string(term));
         client->appendReplyBody("voteGranted");
@@ -102,7 +102,7 @@ int RequestVoteCommand::operator[](Client *client) const {
     cluster->voteFor(candidateId);
     client->initReplyHead(5);
     client->appendReplyType(this->commandType());
-    client->appendReplyBody("replyRequestVote");
+    client->appendReplyBody("replyrequestvote");
     client->appendReplyBody("term");
     client->appendReplyBody(std::to_string(term));
     client->appendReplyBody("voteGranted");

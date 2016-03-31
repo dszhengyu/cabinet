@@ -69,8 +69,6 @@ private:
     int electionTimeout;
     int receiveVotes;
     int winVoteBaseline;
-    int clusterPort;
-    int clusterListenFd;
     string pfName;
 
     static const char LEADER = 'L';

@@ -12,6 +12,7 @@ public:
     int executeCommand();
     Cluster *getClusterPtr() const {return this->cluster;}
     int getClusterId() const {return this->clusterId;}
+    void setClusterId(int clusterId) {this->clusterId = clusterId;}
     ~ClusterClient();
 
 private:

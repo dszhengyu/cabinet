@@ -199,5 +199,6 @@ int AppendEntryCommand::operator[](Client *client) const {
     client->appendReplyBody("term");
     client->appendReplyBody(std::to_string(term));
     client->appendReplyBody("success");
+    client->appendReplyBody("true");
     return CABINET_OK;
 }

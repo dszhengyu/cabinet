@@ -11,6 +11,10 @@
     #include "RequestVoteCommand.h"
     #include "ReplyRequestVoteCommand.h"
     #include "AppendEntryCommand.h"
+    #include "ReplyAppendEntryCommand.h"
+    #include "ClusterNodeCommand.h"
+    #include "ReplyClusterNodeCommand.h"
+    #include "FlushServerCommand.h"
     #include "ClusterDefaultCommand.h"
 #endif
 
@@ -27,6 +31,10 @@ void CommandKeeper::createClusterCommandMap() {
     commandMap["requestvote"] = new RequestVoteCommand();
     commandMap["replyrequestvote"] = new ReplyRequestVoteCommand();
     commandMap["appendentry"] = new AppendEntryCommand();
+    commandMap["replyappendentry"] = new ReplyAppendEntryCommand();
+    commandMap["clusternode"] = new ClusterNodeCommand();
+    commandMap["replyclusternode"] = new ReplyClusterNodeCommand();
+    commandMap["flushserver"] = new FlushServerCommand();
 }
 #endif
 

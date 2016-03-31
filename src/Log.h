@@ -20,8 +20,10 @@ public:
 
 private:
     static void log(const char *logFileName, const char *logHeader, const char *fileName, int line, const char *format, va_list args);
-    constexpr const static char *wLogFileName = "cabinet.warning.log";
-    constexpr const static char *nLogFileName = "cabinet.notice.log";
+    //constexpr const static char *wLogFileName = "cabinet.warning.log";
+    //constexpr const static char *nLogFileName = "cabinet.notice.log";
+    constexpr const static char *wLogFileName = "cabinet.log";
+    constexpr const static char *nLogFileName = "cabinet.log";
     const static int BUF_MAX_SIZE = 1024 * 1000;
 };
 

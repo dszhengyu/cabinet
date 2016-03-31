@@ -34,6 +34,7 @@ public:
     void setLeaderId(int leaderId) {this->currentLeaderId = leaderId;}
 
     int getLeaderIPAndPort(string &ip, int &port);
+    int confirmConnectSibling(ClusterClient *sibling);
 
 private:
     int validateClusterId(int clusterId);
@@ -49,5 +50,6 @@ private:
     Cluster *cluster;
     int currentLeaderId;
     map<string, int> ipPortClusterIdMap;
+    map<int, bool> connectTrying;
 };
 #endif

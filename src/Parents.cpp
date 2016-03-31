@@ -3,16 +3,17 @@
 #include <algorithm>
 using std::find;
 
-Parents::Parents():
+Parents::Parents(Cluster *cluster):
     parentsQueue(),
-    dealingIndexParentsMap()
+    dealingIndexParentsMap(),
+    cluster(cluster)
 {
 }
 
 int Parents::addParents(ClusterClient *parents) {
-    logDebug("add parents");
+    logDebug("cluster cluster_id[%d] add parents", this->cluster->getClusterId());
     if (this->findParentsInQueue(parents) != this->parentsQueue.end()) {
-        logWarning("add parents which it is already exist");
+        logWarning("cluster cluster_id[%d] add parents which it is already exist", this->cluster->getClusterId());
         return CABINET_ERR;
     }
     this->parentsQueue.push_back(parents);
@@ -20,12 +21,13 @@ int Parents::addParents(ClusterClient *parents) {
 }
 
 int Parents::deleteParents(ClusterClient *parents) {
-    logDebug("delete parents");
-    if (this->findParentsInQueue(parents) == this->parentsQueue.end()) {
-        logWarning("delete parents which it is not exist");
+    logDebug("cluster cluster_id[%d] delete parents", this->cluster->getClusterId());
+    Parents::queueIter findResult = this->findParentsInQueue(parents);
+    if (findResult == this->parentsQueue.end()) {
+        logWarning("cluster cluster_id[%d] delete parents which it is not exist", this->cluster->getClusterId());
         return CABINET_ERR;
     }
-    this->parentsQueue.push_back(parents);
+    this->parentsQueue.erase(findResult);
     return CABINET_OK;
 }
 
@@ -33,16 +35,18 @@ Parents::queueIter Parents::findParentsInQueue(ClusterClient *parents) {
     Parents::queueIter findResult;
     if ((findResult = find(this->parentsQueue.begin(), this->parentsQueue.end(), parents)) 
             == this->parentsQueue.end()) {
-        logDebug("no find match parents");
+        //logDebug("no find match parents");
     }
-    logDebug("parents exist");
+    else {
+        //logDebug("parents exist");
+    }
     return findResult;
 }
 
 int Parents::setDealingIndex(long dealingIndex, ClusterClient *parent) {
-    logDebug("set dealing index in parents");
+    logDebug("cluster cluster_id[%d] set dealing index in parents", this->cluster->getClusterId());
     if (this->findParentsInQueue(parent) == this->parentsQueue.end()) {
-        logWarning("set dealing index to no-exist parents");
+        logWarning("cluster cluster_id[%d] set dealing index to no-exist parents", this->cluster->getClusterId());
         return CABINET_ERR;
     }
 

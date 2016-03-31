@@ -98,6 +98,7 @@ int Util::acceptTcp(const int listenfd, string &strIP, int &port) {
     char ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &clientAddr.sin_addr, ip, INET_ADDRSTRLEN);
     strIP = ip;
+    port = ntohs(clientAddr.sin_port);
 
     return connectFd;
 }
@@ -111,10 +112,6 @@ int Util::connectTcp(const char *ip, int port) {
         logWarning("Create Socket Error");
         return CABINET_ERR;
     }
-    //if (Util::setNonBlock(connectFd) == CABINET_ERR) {
-    //    logWarning("Set Connect Fd Non Block Error");
-    //    return CABINET_ERR;
-    //}
 
     bzero(&clientAddr, sizeof(clientAddr));
     clientAddr.sin_family = AF_INET;
@@ -125,9 +122,10 @@ int Util::connectTcp(const char *ip, int port) {
     }
     
     if (connect(connectFd, (struct sockaddr *)&clientAddr, sizeof(clientAddr)) < 0) {
-        //logWarning("Connect Server Error, IP[%s], port[%d]", ip, port);
+        logWarning("Connect Server Error, IP[%s], port[%d]", ip, port);
         return CABINET_ERR;
     }
+    logNotice("connect tcp success, IP[%s], port[%d], fd[%d]", ip, port, connectFd);
     return connectFd;
 }
 

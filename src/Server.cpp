@@ -43,9 +43,8 @@ void Server::init() {
     this->commandKeeperPtr = new CommandKeeper();
     this->commandKeeperPtr->createServerCommandMap();
 
-    if ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
-        logFatal("listen on port error");
-        exit(1);
+    while ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
+        logFatal("server listen on port[%d] error, keep trying", this->port);
     }
 
     this->eventPoll = new EventPoll(this);

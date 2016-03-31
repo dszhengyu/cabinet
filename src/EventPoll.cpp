@@ -1,5 +1,6 @@
 #include "EventPoll.h"
 #include "Const.h"
+#include "Log.h"
 #include <sys/epoll.h>
 #include <unistd.h>
 
@@ -89,7 +90,6 @@ int EventPoll::pollListenFd(int listenFd) {
 
 int EventPoll::fileEventOperation(int fd, int eventType, int opType) {
     int op = ((opType == this->ADD_EVENT) ? EPOLL_CTL_ADD : EPOLL_CTL_DEL);
-    //int op = ((opType == this->ADD_EVENT) ? EPOLL_CTL_ADD : ((opType == this->DEL_EVENT) ? EPOLL_CTL_DEL : EPOLL_CTL_MOD));
     int pollEvent = ((eventType == READ_EVENT) ? EPOLLIN : EPOLLOUT);
     struct epoll_event ee;
     ee.events = pollEvent;

@@ -23,8 +23,6 @@ Cluster::Cluster():
     electionTimeout(100),
     receiveVotes(0),
     winVoteBaseline(0),
-    clusterPort(-1),
-    clusterListenFd(-1),
     pfName()
 {
 }
@@ -39,11 +37,10 @@ void Cluster::initConfig() {
         this->clusterId = std::stoi(conf["CLUSTER_ID"]);
         this->port = std::stoi(conf["CLUSTER_PORT"]);;
         this->hz = std::stoi(conf["CLUSTER_HZ"]);
-        this->electionTimeout = std::stoi(conf["CLUSTER_ELECTION_TIMEOUT"]);
+        this->electionTimeout = std::stoi(conf["CLUSTER_ELECTION_TIMEOUT_RATIO"]) * (1000 / this->hz);
         int clusterIDMax = std::stoi(conf["CLUSTER_ID_MAX"]);
         int clusterIDMin = std::stoi(conf["CLUSTER_ID_MIN"]);
         this->winVoteBaseline = (clusterIDMax - clusterIDMin + 1) / 2 + 1;
-        this->clusterPort = std::stoi(conf["CLUSTER_CLUSTER_PORT"]);
         this->pfName = conf["CLUSTER_PF_NAME"];
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());
@@ -62,7 +59,7 @@ void Cluster::initConfig() {
         exit(1);
     }
 
-    this->parents = new Parents();
+    this->parents = new Parents(this);
 
     this->pf = new PersistenceFile(this->pfName, this->pfName + ".temp");
 }
@@ -76,14 +73,8 @@ void Cluster::init() {
     this->commandKeeperPtr = new CommandKeeper();
     this->commandKeeperPtr->createClusterCommandMap();
 
-    if ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
-        logFatal("cluster cluster_id[%d] listen on port error, port[%d]", this->clusterId, this->port);
-        exit(1);
-    }
-
-    if ((this->clusterListenFd = this->listenOnPort(this->clusterPort)) == CABINET_ERR) {
-        logFatal("cluster cluster_id[%d] listen on cluster port error, cluster port[%d]", this->clusterId, this->clusterPort);
-        exit(1);
+    while ((this->listenFd = this->listenOnPort(this->port)) == CABINET_ERR) {
+        logFatal("cluster cluster_id[%d] listen on port[%d] error, keep trying", this->clusterId, this->port);
     }
    
     this->eventPoll = new EventPoll(this);
@@ -92,7 +83,10 @@ void Cluster::init() {
         exit(1);
     }
 
-    this->eventPoll->pollListenFd(this->getListenFd());
+    if (this->eventPoll->pollListenFd(this->getListenFd()) == CABINET_ERR) {
+        logFatal("cluster cluster_id[%d] pool listen fd error, port[%d]", this->clusterId, this->port);
+        exit(1);
+    }
 
     if (this->toFollow(1) == CABINET_ERR) {
         logFatal("cluster cluster_id[%d] init cluster cluster_id[%d] to follow error", this->clusterId);
@@ -101,6 +95,7 @@ void Cluster::init() {
 }
 
 Client *Cluster::createClient(int listenFd) {
+    logNotice("cluster cluster_id[%d] create new client, listen_fd[%d]", this->clusterId, listenFd);
     int connectFd = 0;
     string ip;
     int port = 0;
@@ -116,15 +111,6 @@ Client *Cluster::createClient(int listenFd) {
         newClient = this->createNormalClient(connectFd, ip, port);
         if (this->parents->addParents(newClient) == CABINET_ERR) {
             logWarning("cluster cluster_id[%d] add cluster client to parents error", this->clusterId);
-            return nullptr;
-        }
-    }
-    else if (listenFd == this->clusterListenFd) {
-        logNotice("cluster cluster_id[%d] add new cluster node", this->clusterId);
-        newClient = this->createNormalClient(connectFd, ip, port);
-        newClient->setCategory(Client::CLUSTER_CLIENT);
-        if (this->siblings->addSiblings(newClient) == CABINET_ERR) {
-            logWarning("cluster cluster_id[%d] add cluster client to siblings error", this->clusterId);
             return nullptr;
         }
     }
@@ -177,6 +163,7 @@ int Cluster::deleteClient(Client *client) {
  *       2. 根据不同角色做不同的事情
  */
 int Cluster::cron() {
+    logDebug("cluster cluster_id[%d] start cron, role[%c]", this->clusterId, this->role);
     //judge whether meet working baseline
     this->meetWorkingBaseline = this->siblings->satisfyWorkingBaseling() && this->children->satisfyWorkingBaseling();
     //reconnect if baseline not achieved
@@ -200,11 +187,16 @@ int Cluster::cron() {
                 exit(1);
             }
         }
+        this->meetWorkingBaseline = this->siblings->satisfyWorkingBaseling() && this->children->satisfyWorkingBaseling();
+        if (this->meetWorkingBaseline) {
+            logNotice("cluster cluster_id[%d] already meet working baseline", this->clusterId);
+        }
         return CABINET_OK;
     }
 
     //do thing each role should do
-    if (this->getClusterRole() == Cluster::LEADER) {
+    if (this->isLeader()) {
+        logDebug("cluster cluster_id[%d] work as leader", this->clusterId);
         //append entry to sibilings
         vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
         Command &appendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
@@ -224,8 +216,10 @@ int Cluster::cron() {
         return CABINET_OK;
     }
 
-    if (this->getClusterRole() == Cluster::FOLLOWER) {
-        long gap = this->updateTimeout();
+    if (this->isFollower()) {
+        logDebug("cluster cluster_id[%d] work as follower", this->clusterId);
+        long currentUnixTimeInMs = Util::getCurrentTimeInMs();
+        long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
         if (gap > this->electionTimeout) {
             logNotice("cluster cluster_id[%d] follower election timeout, change to candidate", this->clusterId);
             if (this->toCandidate() == CABINET_ERR) {
@@ -237,8 +231,10 @@ int Cluster::cron() {
         return CABINET_OK;
     }
 
-    if (this->getClusterRole() == Cluster::CANDIDATE) {
-        long gap = this->updateTimeout();
+    if (this->isCandidate()) {
+        logDebug("cluster cluster_id[%d] work as candidate", this->clusterId);
+        long currentUnixTimeInMs = Util::getCurrentTimeInMs();
+        long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
         if (gap > this->electionTimeout) {
             //receive enough votes
             if (this->receiveVotes >= this->winVoteBaseline) {

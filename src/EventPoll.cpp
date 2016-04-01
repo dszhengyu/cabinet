@@ -4,6 +4,7 @@
 #include "Util.h"
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <cstring>
 
 EventPoll::EventPoll(Cabinet *cabinet):
     cabinet(cabinet),
@@ -117,12 +118,29 @@ int EventPoll::processEvent() {
         //logDebug("###epoll wait");
         long beforeEpollWait = Util::getCurrentTimeInMs();
         int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, timeout);
+        if (eventNumber == -1) {
+            logFatal("event poll execute error, error_desc[%s]", strerror(errno));
+            exit(1);
+        }
         long afterEpollWait = Util::getCurrentTimeInMs();
-        logDebug("plan to epoll_wait[%d], actual wait[%ld], event_number[%d]", timeout, afterEpollWait - beforeEpollWait, eventNumber);
+        long actualWait = afterEpollWait - beforeEpollWait;
+        logDebug("plan to epoll_wait[%d], actual wait[%ld], event_number[%d]", timeout, actualWait, eventNumber);
+        //compensate the time
+        if ((timeout != 0) && (timeout != -1) && (actualWait < timeout)) {
+            long compensateTime = (long)timeout - actualWait;
+            if (usleep(compensateTime * 1000) == -1) {
+                logFatal("compensate time error, error_desc[%s]", strerror(errno));
+                continue;
+            }
+            afterEpollWait = Util::getCurrentTimeInMs();
+            long actualWaitAfterCompensate = afterEpollWait - beforeEpollWait;
+            logDebug("plan to epoll_wait[%d], actual wait[%ld], compensate_time[%ld], actual_wait after compensate[%ld]", 
+                    timeout, actualWait, compensateTime, actualWaitAfterCompensate);
+        }
+
         if (eventNumber == 0) {
             continue;
         }
-
         for (int processingNumber = 0; processingNumber < eventNumber; ++processingNumber) {
             int eventFd = events[processingNumber].data.fd;
             auto eventType = events[processingNumber].events;

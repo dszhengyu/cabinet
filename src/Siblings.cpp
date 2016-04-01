@@ -154,6 +154,8 @@ bool Siblings::satisfyWorkingBaseling() {
  *      4. add the new client into eventpoll
  */
 int Siblings::connectLostSiblings() {
+    int cabinetClusterId = this->cluster->getClusterId();
+    logDebug("cluster cluster_id[%d] connect lost siblings", cabinetClusterId);
     for (int clusterId : this->clusterIdVector) {
         if (this->connectStatus[clusterId] == true) {
             logDebug("cluster cluster_id[%d] already connect No.%d sibling", this->clusterId, clusterId);

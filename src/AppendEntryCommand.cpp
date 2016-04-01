@@ -47,7 +47,7 @@ int AppendEntryCommand::operator>>(Client *client) const {
         if ((pf->findEntry(nextEntryIndex, nextEntry) == CABINET_ERR) &&
                 (nextEntryIndex > (lastLogIndex + 1))) {
             logNotice("cluster cluster_id[%d] does not contain necessary entry to append, change to follower", 
-                    cluster->getClusterId());
+                    leaderId);
             cluster->toFollow(cluster->getTerm());
             return CABINET_OK;
         }
@@ -136,15 +136,20 @@ int AppendEntryCommand::operator[](Client *client) const {
     }
 
     logDebug("cluster cluster_id[%d] receive append entry from cluster[%d]", followerId, leaderId);
+
+
+    //验证term的正确性
     long term = cluster->getTerm();
     if (cluster->isCandidate() || cluster->isLeader()) {
         if (term < leaderTerm) {
-            logNotice("cluster cluster_id[%d] receive append entry with high term, to follow", 
-                    cluster->getClusterId());
+            logNotice("cluster cluster_id[%d] receive append entry from cluster[%d] with high term, to follow", 
+                    followerId, leaderId);
             cluster->toFollow(leaderTerm);
             term = cluster->getTerm();
         }
         else {
+            logDebug("cluster cluster_id[%d] is leader or candidate with equal or higher term, reject append entry from cluster[%d]", 
+                    followerId, leaderId);
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
             client->appendReplyBody("replyappendentry");
@@ -155,38 +160,65 @@ int AppendEntryCommand::operator[](Client *client) const {
             return CABINET_OK;
         }
     }
-
     if (!cluster->isFollower()) {
         logFatal("only follower execute here");
         exit(1);
     }
 
+    //更改某些状态
     cluster->updateTimeout();
     Siblings *siblings = cluster->getSiblings();
     siblings->setLeaderId(leaderId);
     PersistenceFile *pf = cluster->getPersistenceFile();
-    Entry prevEntry;
-    if (pf->findEntry(leaderPrevLogIndex, prevEntry) == CABINET_ERR) {
-        client->initReplyHead(5);
-        client->appendReplyType(this->commandType());
-        client->appendReplyBody("replyappendentry");
-        client->appendReplyBody("term");
-        client->appendReplyBody(std::to_string(term));
-        client->appendReplyBody("success");
-        client->appendReplyBody("false");
-        return CABINET_OK;
-    }
 
-    if (prevEntry.getTerm() != leaderPrevLogTerm) {
-        pf->deleteEntryAfter(leaderPrevLogIndex);
-        client->initReplyHead(5);
-        client->appendReplyType(this->commandType());
-        client->appendReplyBody("replyappendentry");
-        client->appendReplyBody("term");
-        client->appendReplyBody(std::to_string(term));
-        client->appendReplyBody("success");
-        client->appendReplyBody("false");
-        return CABINET_OK;
+    //验证prevLog的正确性
+    //  两种情况: 1. prevLogIndex为0, 只需验证本机pf也没有entry即可
+    //            2. prevLogIndex不为0, 详细验证prevLogIndex以及prevLogTerm
+    if (leaderPrevLogIndex == 0) {
+        Entry lastEntry;
+        if (pf->findLastEntry(lastEntry) != CABINET_ERR) {
+            logDebug("cluster cluster_id[%d] get prevLogIndex[0] from cluster[%d], but have log in local pf,\
+                    reject append entry from cluster[%d]", 
+                    followerId, leaderId, leaderId);
+            client->initReplyHead(5);
+            client->appendReplyType(this->commandType());
+            client->appendReplyBody("replyappendentry");
+            client->appendReplyBody("term");
+            client->appendReplyBody(std::to_string(term));
+            client->appendReplyBody("success");
+            client->appendReplyBody("false");
+            return CABINET_OK;
+        }
+    }
+    else {
+        Entry prevEntry;
+        if (pf->findEntry(leaderPrevLogIndex, prevEntry) == CABINET_ERR) {
+            logDebug("cluster cluster_id[%d] can not find leader prevlog in pf, reject append entry from cluster[%d]", 
+                    followerId, leaderId);
+            client->initReplyHead(5);
+            client->appendReplyType(this->commandType());
+            client->appendReplyBody("replyappendentry");
+            client->appendReplyBody("term");
+            client->appendReplyBody(std::to_string(term));
+            client->appendReplyBody("success");
+            client->appendReplyBody("false");
+            return CABINET_OK;
+        }
+
+        if (prevEntry.getTerm() != leaderPrevLogTerm) {
+            logDebug("cluster cluster_id[%d] find leader prev log in pf with same index but different term, \
+                    reject append entry from cluster[%d]", 
+                    followerId, leaderId);
+            pf->deleteEntryAfter(leaderPrevLogIndex);
+            client->initReplyHead(5);
+            client->appendReplyType(this->commandType());
+            client->appendReplyBody("replyappendentry");
+            client->appendReplyBody("term");
+            client->appendReplyBody(std::to_string(term));
+            client->appendReplyBody("success");
+            client->appendReplyBody("false");
+            return CABINET_OK;
+        }
     }
 
     if (leaderEntryIndex != 0 && leaderEntryTerm != 0) {

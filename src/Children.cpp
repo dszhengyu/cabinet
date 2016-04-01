@@ -53,6 +53,9 @@ bool Children::satisfyWorkingBaseling() const {
 }
 
 int Children::connectLostChildren() {
+    int clusterId = this->cluster->getClusterId();
+    logDebug("cluster cluster_id[%d] connect lost children", clusterId);
+
     if (this->satisfyWorkingBaseling() == true) {
         return CABINET_OK;
     }
@@ -78,6 +81,7 @@ int Children::connectLostChildren() {
         delete newChild;
         return CABINET_OK;
     }
+    logDebug("cluster cluster_id[%d] connect lost children success", clusterId);
     return CABINET_OK;
 }
 

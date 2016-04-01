@@ -12,13 +12,13 @@ int ReplyRequestVoteCommand::operator[](Client *client) const {
     Cluster *cluster = clusterClient->getClusterPtr();
     int clusterId = cluster->getClusterId();
     int voterId = clusterClient->getClusterId();
+    logDebug("cluster cluster_id[%d] receive reply for request vote from cluster[%d]", clusterId, voterId);
     if (!cluster->isCandidate()) {
         //reply might come after the role has changed, just ignore it 
-        logWarning("cluster cluster_id[%d] is not a candidate, ignore reply request vote!", clusterId);
+        logWarning("cluster cluster_id[%d] is not a candidate, ignore reply request vote from cluster[%d]", clusterId, voterId);
         return CABINET_OK;
     }
 
-    logDebug("cluster cluster_id[%d] receive reply for request vote from cluster[%d]", clusterId, voterId);
 
     long term = cluster->getTerm();
     long replyTerm;
@@ -33,18 +33,19 @@ int ReplyRequestVoteCommand::operator[](Client *client) const {
     }
     
     if (replyTerm > term) {
-        logNotice("cluster cluster_id[%d] receive reply request vote has high term, to follow", clusterId);
+        logNotice("cluster cluster_id[%d] receive reply request vote from cluster[%d] has high term, to follow", 
+                clusterId, voterId);
         cluster->toFollow(replyTerm);
         return CABINET_OK;
     }
 
     if (voteGranted != string("true")) {
-        logNotice("cluster cluster_id[%d] receive reply request vote, but not get a vote", clusterId);
+        logNotice("cluster cluster_id[%d] receive reply request vote from cluster[%d], but not get a vote", clusterId, voterId);
         return CABINET_OK;
     }
 
     cluster->increaseVote();
-    logNotice("cluster cluster_id[%d] receive reply request vote, get a vote", clusterId);
+    logNotice("cluster cluster_id[%d] receive reply request vote from cluster[%d], get a vote", clusterId, voterId);
     if (cluster->achieveLeaderBaseline()) {
         logNotice("cluster cluster_id[%d] receive enough vote, change to leader", clusterId);
         cluster->toLead();

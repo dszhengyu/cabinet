@@ -105,7 +105,7 @@ int Client::appendReplyBody(const char *part) {
  * notice: 发送完成后, 需要删除eventloop中的可写轮询, 安装可读轮询
  */
 int Client::sendReply() {
-    logDebug("sending reply");
+    //logDebug("sending reply");
     if (this->category == LOCAL_PF_CLIENT) {
         logDebug("local pf client no reply");
         return CABINET_OK; 

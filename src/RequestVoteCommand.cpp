@@ -26,7 +26,7 @@ int RequestVoteCommand::operator>>(Client *client) const {
     long lastLogIndex = lastEntry.getIndex();
     long lastLogTerm = lastEntry.getTerm();
 
-    logDebug("cluster cluster_id[%d] request vote from cluster[%d]", candidateId, ticketHolderId);
+    logDebug("cluster cluster_id[%d] send request vote to cluster[%d]", candidateId, ticketHolderId);
     client->initReplyHead(9);
     client->appendReplyType(this->commandType());
     client->appendReplyBody("requestvote");
@@ -84,8 +84,8 @@ int RequestVoteCommand::operator[](Client *client) const {
     long lastLogTerm = lastEntry.getTerm();
 
     if (term < candidateTerm) {
-        logNotice("cluster cluster_id[%d] receive request vote has high term, to follow", 
-                cluster->getClusterId());
+        logNotice("cluster cluster_id[%d] receive request vote from cluster[%d] has high term, to follow", 
+                ticketHolderId, candidateId);
         cluster->toFollow(candidateTerm);
         term = cluster->getTerm();
     }

@@ -41,7 +41,7 @@ void Cluster::initConfig() {
         int clusterIDMax = std::stoi(conf["CLUSTER_ID_MAX"]);
         int clusterIDMin = std::stoi(conf["CLUSTER_ID_MIN"]);
         this->winVoteBaseline = (clusterIDMax - clusterIDMin + 1) / 2 + 1;
-        this->pfName = conf["CLUSTER_PF_NAME"];
+        this->pfName = conf["CLUSTER_PF_NAME"] + "." + conf["CLUSTER_ID"];
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());
         exit(1);
@@ -95,6 +95,10 @@ void Cluster::init() {
         logFatal("cluster cluster_id[%d] init cluster cluster_id[%d] to follow error", this->clusterId);
         exit(1);
     }
+
+    logNotice("init cluster cluster_id[%d] done", this->clusterId);
+    #include "CabinetLogo.h"
+    logNotice(cabinet_cluster_logo, this->port, this->pfName.c_str(), this->clusterId, this->hz);
 }
 
 Client *Cluster::createClient(int listenFd) {
@@ -286,6 +290,7 @@ int Cluster::toLead() {
     logNotice("cluster cluster_id[%d] to lead", this->clusterId);
     this->setClusterRole(Cluster::LEADER);
     this->votedFor = -1;
+    ++this->currentTerm;
 
     vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
     Command &firstAppendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");

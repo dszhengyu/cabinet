@@ -16,6 +16,8 @@ public:
     static int connectTcp(const char *ip, int port);
     static int daemonize();
     static int closeConnectFd(int connectFd);
+private:
+    static int reuseAddress(int fd);
 };
 
 #endif

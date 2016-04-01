@@ -52,6 +52,11 @@ int Util::listenTcp(int port) {
         return CABINET_ERR;
     }   
 
+    if (Util::reuseAddress(listenfd) == CABINET_ERR) {
+        logFatal("reuse listen fd address error");
+        return CABINET_ERR;
+    }
+
     bzero(&serverAddr, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -104,7 +109,7 @@ int Util::acceptTcp(const int listenfd, string &strIP, int &port) {
 }
 
 int Util::connectTcp(const char *ip, int port) {
-    logNotice("connect tcp, IP[%s], port[%d]", ip, port);
+    //logDebug("connect tcp, IP[%s], port[%d]", ip, port);
     int connectFd;
     struct sockaddr_in clientAddr;
     
@@ -166,5 +171,14 @@ int Util::daemonize() {
 
 int Util::closeConnectFd(int connectFd) {
     close(connectFd);
+    return CABINET_OK;
+}
+
+int Util::reuseAddress(int fd) {
+    int reuse = 1;
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
+        logFatal("set fd[%d] reuse address error, desc[%s]", fd, strerror(errno));
+        return CABINET_ERR;
+    }
     return CABINET_OK;
 }

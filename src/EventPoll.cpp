@@ -1,6 +1,7 @@
 #include "EventPoll.h"
 #include "Const.h"
 #include "Log.h"
+#include "Util.h"
 #include <sys/epoll.h>
 #include <unistd.h>
 
@@ -15,7 +16,7 @@ EventPoll::EventPoll(Cabinet *cabinet):
 }
 
 int EventPoll::initEventPoll() {
-    logDebug("init event poll");
+    //logDebug("init event poll");
     int eventPollFd = epoll_create(this->EPOLL_SIZE);
     if (eventPollFd == -1) {
         logFatal("create epoll error");
@@ -114,8 +115,10 @@ int EventPoll::processEvent() {
         //do file event
         struct epoll_event events[this->EPOLL_SIZE];
         //logDebug("###epoll wait");
+        long beforeEpollWait = Util::getCurrentTimeInMs();
         int eventNumber = epoll_wait(this->eventPollFd, events, this->EPOLL_SIZE, timeout);
-        //logDebug("###event comes~ event_number[%d]", eventNumber);
+        long afterEpollWait = Util::getCurrentTimeInMs();
+        logDebug("plan to epoll_wait[%d], actual wait[%ld], event_number[%d]", timeout, afterEpollWait - beforeEpollWait, eventNumber);
         if (eventNumber == 0) {
             continue;
         }

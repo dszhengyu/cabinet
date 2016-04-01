@@ -102,7 +102,7 @@ int Server::importPF() {
     while (this->pf->getNextPFEntry(entry) != CABINET_ERR) {
         //feed the client, resolve it, execute it
         const string &curEntryContent = entry.getContent();
-        logDebug("--importing persistence file, current entry[\n%s]", curEntryContent.c_str());
+        //logDebug("--importing persistence file, current entry[\n%s]", curEntryContent.c_str());
         pFClient->fillReceiveBuf(curEntryContent); 
         if (pFClient->resolveReceiveBuf() == CABINET_ERR) {
             logWarning("import persistence file error, revolve error, current entry[\n%s]", curEntryContent.c_str());

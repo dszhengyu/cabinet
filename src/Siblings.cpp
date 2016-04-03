@@ -15,7 +15,8 @@ Siblings::Siblings(Cluster *cluster):
     cluster(cluster),
     currentLeaderId(-1),
     ipPortClusterIdMap(),
-    connectTrying()
+    connectTrying(),
+    alreadyAppendEntry()
 {
 }
 
@@ -47,6 +48,7 @@ int Siblings::recognizeSiblings(Configuration &conf) {
             string ipPort = ip + ":" + std::to_string(port);
             this->ipPortClusterIdMap[ipPort] = idReading;
             this->connectTrying[idReading] = false;
+            this->alreadyAppendEntry[idReading] = false;
             logNotice("cluster cluster_id[%d] recognize No.%d siblings, ip[%s], port[%d]", 
                     this->clusterId, idReading, ip.c_str(), port);
         }
@@ -98,6 +100,7 @@ int Siblings::addSiblings(ClusterClient *sibling) {
     this->nextIndexMap[clusterId] = 0;
     this->matchIndexMap[clusterId] = 0;
     this->connectTrying[clusterId] = false;
+    this->alreadyAppendEntry[clusterId] = false;
     logNotice("cluster cluster_id[%d] validate sibling, sibling_cluster_id[%d], sibling_ip[%s], sibling_port[%d]", 
             this->clusterId, clusterId, sibling->getIp().c_str(), sibling->getPort());
 
@@ -123,14 +126,16 @@ int Siblings::deleteSiblings(ClusterClient *sibling) {
     this->nextIndexMap[clusterId] = 0;
     this->matchIndexMap[clusterId] = 0;
     this->connectTrying[clusterId] = false;
+    this->alreadyAppendEntry[clusterId] = false;
 
     return CABINET_OK;
 }
 
-vector<ClusterClient *> Siblings::getOnlineSiblings() {
+vector<ClusterClient *> Siblings::getSiblingsNeedAppendEntry() {
     vector<ClusterClient *> siblingsVector;
     for (int clusterId : this->clusterIdVector) {
-        if (this->connectStatus[clusterId] == true) {
+        if (this->connectStatus[clusterId] == true &&
+                this->alreadyAppendEntry[clusterId] == false) {
             siblingsVector.push_back(this->clusterIdClientPtrMap[clusterId]);
             continue;
         }
@@ -290,4 +295,21 @@ int Siblings::shutDown() {
         Util::closeConnectFd(connectFd);
     }
     return CABINET_OK;
+}
+
+int Siblings::setAlreadyAppendEntry(int clusterId, bool already) {
+    //logDebug("cluster cluster_id[%d] set cluster[%d] alreadyAppendEntry[%s]", this->clusterId, clusterId,
+    //        (already ? "true" : "false"));
+    if (this->validateClusterId(clusterId) == CABINET_ERR) {
+        logWarning("set already append entry error with invalid id, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+    this->alreadyAppendEntry[clusterId] = already;
+    return CABINET_OK;
+}
+
+void Siblings::setAlreadyAppendEntryBatch(bool alreadyBatch) {
+    for (int clusterId : this->clusterIdVector) {
+        this->alreadyAppendEntry[clusterId] = alreadyBatch;
+    }
 }

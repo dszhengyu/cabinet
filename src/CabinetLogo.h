@@ -28,7 +28,7 @@ const char *cabinet_cluster_logo =
 "|        |        |        |    PersistenceFileName: %s\n"
 "+________+________+________+    Cluster_id: %d\n"
 "|        |        |        |    Hz: %d\n"   
-"|        |        |        |\n"   
+"|        |        |        |    ElectionTimeout: %d\n"   
 "|        |        |        |\n"   
 "|     || |     || |     || |\n"   
 "|        |        |        |\n"   

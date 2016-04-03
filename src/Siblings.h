@@ -19,7 +19,7 @@ public:
     int recognizeSiblings(Configuration &conf);
     int addSiblings(ClusterClient *sibling);
     int deleteSiblings(ClusterClient *sibling);
-    vector<ClusterClient *> getOnlineSiblings();
+    vector<ClusterClient *> getSiblingsNeedAppendEntry();
     bool satisfyWorkingBaseling();
     int connectLostSiblings();
 
@@ -29,6 +29,8 @@ public:
     void setNextIndexBatch(long newNextIndex);
     void setMatchIndexBatch(long newMatchIndex);
     void setMatchIndex(int clusterId, long newMatchIndex);
+    int setAlreadyAppendEntry(int clusterId, bool already);
+    void setAlreadyAppendEntryBatch(bool alreadyBatch);
 
     int getLeaderId() const {return this->currentLeaderId;}
     void setLeaderId(int leaderId) {this->currentLeaderId = leaderId;}
@@ -53,5 +55,6 @@ private:
     int currentLeaderId;
     map<string, int> ipPortClusterIdMap;
     map<int, bool> connectTrying;
+    map<int, bool> alreadyAppendEntry;
 };
 #endif

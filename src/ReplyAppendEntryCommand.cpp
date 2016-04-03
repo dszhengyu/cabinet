@@ -47,6 +47,10 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
     }
 
     Siblings *siblings = cluster->getSiblings();
+    if (siblings->setAlreadyAppendEntry(followerId, false) == CABINET_ERR) {
+        logWarning("cluster cluster_id[%d] set cluster[%d] already append entry[true] error", leaderId, followerId);
+    }
+
     if (result == string("false")) {
         long currentNextIndex = siblings->getSiblingNextIndex(followerId);
         if (currentNextIndex == 1) {

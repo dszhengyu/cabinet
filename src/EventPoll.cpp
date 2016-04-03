@@ -124,7 +124,7 @@ int EventPoll::processEvent() {
         }
         long afterEpollWait = Util::getCurrentTimeInMs();
         long actualWait = afterEpollWait - beforeEpollWait;
-        logDebug("plan to epoll_wait[%d], actual wait[%ld], event_number[%d]", timeout, actualWait, eventNumber);
+        //logDebug("plan to epoll_wait[%d], actual wait[%ld], event_number[%d]", timeout, actualWait, eventNumber);
         //compensate the time
         if ((timeout != 0) && (timeout != -1) && (actualWait < timeout)) {
             long compensateTime = (long)timeout - actualWait;
@@ -133,9 +133,9 @@ int EventPoll::processEvent() {
                 continue;
             }
             afterEpollWait = Util::getCurrentTimeInMs();
-            long actualWaitAfterCompensate = afterEpollWait - beforeEpollWait;
-            logDebug("plan to epoll_wait[%d], actual wait[%ld], compensate_time[%ld], actual_wait after compensate[%ld]", 
-                    timeout, actualWait, compensateTime, actualWaitAfterCompensate);
+            //long actualWaitAfterCompensate = afterEpollWait - beforeEpollWait;
+            //logDebug("plan to epoll_wait[%d], actual wait[%ld], compensate_time[%ld], actual_wait after compensate[%ld]", 
+            //        timeout, actualWait, compensateTime, actualWaitAfterCompensate);
         }
 
         if (eventNumber == 0) {

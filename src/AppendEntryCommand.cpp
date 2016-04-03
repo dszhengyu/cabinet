@@ -63,6 +63,10 @@ int AppendEntryCommand::operator>>(Client *client) const {
     long prevLogIndex = entryBeforeNextEntry.getIndex();
     long prevLogTerm = entryBeforeNextEntry.getTerm();
 
+    if (siblings->setAlreadyAppendEntry(clientId, true) == CABINET_ERR) {
+        logWarning("cluster cluster_id[%d] set cluster[%d] already append entry[true] error", leaderId, clientId);
+    }
+
     client->initReplyHead(17);
     client->appendReplyType(this->commandType());
     client->appendReplyBody("appendentry");

@@ -98,7 +98,7 @@ void Cluster::init() {
 
     logNotice("init cluster cluster_id[%d] done", this->clusterId);
     #include "CabinetLogo.h"
-    logNotice(cabinet_cluster_logo, this->port, this->pfName.c_str(), this->clusterId, this->hz);
+    logNotice(cabinet_cluster_logo, this->port, this->pfName.c_str(), this->clusterId, this->hz, this->electionTimeout);
 }
 
 Client *Cluster::createClient(int listenFd) {
@@ -216,7 +216,7 @@ int Cluster::cron() {
     if (this->isLeader()) {
         logDebug("cluster cluster_id[%d] work as leader", this->clusterId);
         //append entry to sibilings
-        vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
+        vector<ClusterClient *> onlineSiblings = this->siblings->getSiblingsNeedAppendEntry();
         Command &appendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
         for (ClusterClient *sibling : onlineSiblings) {
             if ((appendEntryCommand >> sibling) == CABINET_ERR) {
@@ -260,6 +260,10 @@ int Cluster::cron() {
 
             //not enough votes
             logNotice("cluster cluster_id[%d] candidate election timeout, change to candidate", this->clusterId);
+            int sleepAWhile = this->electionTimeout / this->clusterId;
+            logDebug("cluster cluster_id[%d] candidate election timeout, randomly sleep for a while, [%d]ms",
+                    this->clusterId, sleepAWhile);
+            usleep(sleepAWhile * 1000);
             if (this->toCandidate() == CABINET_ERR) {
                 logFatal("cluster cluster_id[%d] to candidate error", this->clusterId);
                 exit(1);
@@ -292,20 +296,21 @@ int Cluster::toLead() {
     this->votedFor = -1;
     ++this->currentTerm;
 
-    vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
-    Command &firstAppendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
-    for (ClusterClient *sibling : onlineSiblings) {
-        if ((firstAppendEntryCommand >> sibling) == CABINET_ERR) {
-            logWarning("cluster cluster_id[%d] first append entry to sibling error", this->clusterId);
-            continue;
-        }
-    }
+    //vector<ClusterClient *> onlineSiblings = this->siblings->getSiblingsNeedAppendEntry();
+    //Command &firstAppendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
+    //for (ClusterClient *sibling : onlineSiblings) {
+    //    if ((firstAppendEntryCommand >> sibling) == CABINET_ERR) {
+    //        logWarning("cluster cluster_id[%d] first append entry to sibling error", this->clusterId);
+    //        continue;
+    //    }
+    //}
 
     Entry lastEntry;
     this->pf->findLastEntry(lastEntry);
     this->lastEntryIndex = lastEntry.getIndex();
     this->siblings->setNextIndexBatch(this->lastEntryIndex);
     this->siblings->setMatchIndexBatch(0);
+    this->siblings->setAlreadyAppendEntryBatch(false);
 
     return CABINET_OK;
 }
@@ -330,7 +335,7 @@ int Cluster::toCandidate() {
     this->receiveVotes = 1;
     this->lastUnixTimeInMs = Util::getCurrentTimeInMs();
 
-    vector<ClusterClient *> onlineSiblings = this->siblings->getOnlineSiblings();
+    vector<ClusterClient *> onlineSiblings = this->siblings->getSiblingsNeedAppendEntry();
     Command &requestVoteCommand = this->commandKeeperPtr->selectCommand("requestvote");
     for (ClusterClient *sibling : onlineSiblings) {
         if ((requestVoteCommand >> sibling) == CABINET_ERR) {

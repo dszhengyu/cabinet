@@ -84,7 +84,7 @@ int RequestVoteCommand::operator[](Client *client) const {
     long lastLogTerm = lastEntry.getTerm();
 
     if (term < candidateTerm) {
-        logNotice("cluster cluster_id[%d] receive request vote from cluster[%d] has high term, to follow", 
+        logNotice("cluster cluster_id[%d] receive request vote from cluster[%d] has higher term, to follow", 
                 ticketHolderId, candidateId);
         cluster->toFollow(candidateTerm);
         term = cluster->getTerm();

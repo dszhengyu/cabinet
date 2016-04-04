@@ -11,13 +11,13 @@ PersistenceFile::PersistenceFile(const string &pfName, const string &tmpPFName):
 }
 
 int PersistenceFile::appendToPF(const Entry &entry) {
-    //logDebug("append entry to pf");
+    logDebug("append entry to pf[%s]", this->pFName.c_str());
     this->pFOut << entry;
     return CABINET_OK;
 }
 
 int PersistenceFile::findEntry(const long index, Entry &entry) {
-    //logDebug("find entry, index[%ld]", index);
+    logDebug("find entry in pf[%s], index[%ld]", this->pFName.c_str(), index);
     this->resetFileStream();
     while (this->getNextPFEntry(entry) != CABINET_ERR) {
         if (entry.getIndex() == index) {
@@ -28,9 +28,9 @@ int PersistenceFile::findEntry(const long index, Entry &entry) {
 }
 
 int PersistenceFile::findLastEntry(Entry &entry) {
-    //logDebug("find last entry");
+    logDebug("find last entry in pf[%s]", this->pFName.c_str());
     if (this->resetFileStream() == CABINET_ERR) {
-        logNotice("empty pf");
+        logNotice("empty pf[%s]", this->pFName.c_str());
         return CABINET_ERR;
     }
     while (this->getNextPFEntry(entry) != CABINET_ERR) {
@@ -46,8 +46,9 @@ int PersistenceFile::findLastEntry(Entry &entry) {
  *      4. reopen in and out file object
  */
 int PersistenceFile::deleteEntryAfter(long index) {
+    logDebug("delete entry and after in pf[%s], index[%ld]", this->pFName.c_str(), index);
     if (this->resetFileStream() == CABINET_ERR) {
-        logWarning("delete entry after index, but pf is empty");
+        logWarning("delete entry after index, but pf[%s] is empty", this->pFName.c_str());
         return CABINET_OK;
     }
 
@@ -60,7 +61,7 @@ int PersistenceFile::deleteEntryAfter(long index) {
         tmpStream << tmpEntry;
     }
     if (tmpEntry.getIndex() != index) {
-        logWarning("delete entry after index but index not found. index[%ld]", index);
+        logWarning("delete entry in pf[%s] after index but index not found. index[%ld]", this->pFName.c_str(), index);
     }
 
     remove(this->pFName.c_str());
@@ -72,7 +73,7 @@ int PersistenceFile::deleteEntryAfter(long index) {
 }
 
 int PersistenceFile::getNextPFEntry(Entry &entry) {
-    //logDebug("get next pf entry");
+    logDebug("get next pf[%s] entry", this->pFName.c_str());
     if (!this->pFIn.good()) {
         return CABINET_ERR;
     }

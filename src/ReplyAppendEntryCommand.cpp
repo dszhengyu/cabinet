@@ -40,27 +40,49 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
         exit(1);
     }
 
+    //验证term
     long term = cluster->getTerm();
     if (term < followerTerm) {
-        logNotice("cluster cluster_id[%d] receive reply append entry with high term, to follow", leaderId);
+        logNotice("cluster cluster_id[%d] receive reply append entry from cluster[%d] with higher term, to follow", 
+                leaderId, followerId);
         cluster->toFollow(followerTerm);
+        return CABINET_OK;
+    }
+    if (!cluster->isLeader()) {
+        logFatal("only leader execute here, program fail");
+        exit(1);
     }
 
+    //允许继续append entry
     Siblings *siblings = cluster->getSiblings();
     if (siblings->setAlreadyAppendEntry(followerId, false) == CABINET_ERR) {
         logWarning("cluster cluster_id[%d] set cluster[%d] already append entry[true] error", leaderId, followerId);
     }
 
+    //验证append entry结果
     if (result == string("false")) {
+        logDebug("cluster cluster_id[%d] receive cluster[%d] append entry reply[false], decrease next_index", leaderId, followerId);
         long currentNextIndex = siblings->getSiblingNextIndex(followerId);
         if (currentNextIndex == 1) {
-            logWarning("can not decrease next index to 0, program fail");
+            logWarning("cluster clsuter_id[%d] can not decrease clsuter[%d] next index to 0, program fail", leaderId, followerId);
             return CABINET_OK;
         }
         siblings->decreaseSiblingNextIndex(followerId);
         return CABINET_OK;
     }
     else {
+        logDebug("cluster cluster_id[%d] receive cluster[%d] append entry reply[true]", leaderId, followerId);
+        //检验之前append entry 是否是空的
+        bool empty;
+        if (siblings->getEmptyAppendEntry(followerId, empty) == CABINET_ERR) {
+            logWarning("cluster clsuter_id[%d] get clsuter[%d] empty append entry error", leaderId, followerId);
+            return CABINET_OK;
+        }
+        if (empty == true) {
+            logDebug("cluster cluster_id[%d] last append entry cluster[%d] empty[true]", leaderId, followerId);
+            return CABINET_OK;
+        }
+        logDebug("cluster cluster_id[%d] last append entry cluster[%d] empty[false]", leaderId, followerId);
         long newMatchIndex = siblings->getSiblingNextIndex(followerId);
         siblings->increaseSiblingNextIndex(followerId);
         siblings->setMatchIndex(followerId, newMatchIndex);

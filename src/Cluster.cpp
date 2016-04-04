@@ -172,7 +172,7 @@ int Cluster::deleteClient(Client *client) {
  *       2. 根据不同角色做不同的事情
  */
 int Cluster::cron() {
-    logDebug("cluster cluster_id[%d] start cron, role[%c]", this->clusterId, this->role);
+    logDebug("cluster cluster_id[%d] start cron, role[%c], term[%ld]", this->clusterId, this->role, this->currentTerm);
     //judge whether meet working baseline
     this->meetWorkingBaseline = this->siblings->satisfyWorkingBaseling() && this->children->satisfyWorkingBaseling();
     //reconnect if baseline not achieved
@@ -214,13 +214,16 @@ int Cluster::cron() {
 
     //do thing each role should do
     if (this->isLeader()) {
-        logDebug("cluster cluster_id[%d] work as leader", this->clusterId);
+        logDebug("cluster cluster_id[%d] work as leader, term[%ld]", this->clusterId, this->currentTerm);
         //append entry to sibilings
         vector<ClusterClient *> onlineSiblings = this->siblings->getSiblingsNeedAppendEntry();
         Command &appendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
         for (ClusterClient *sibling : onlineSiblings) {
             if ((appendEntryCommand >> sibling) == CABINET_ERR) {
                 logWarning("cluster cluster_id[%d] append entry to sibling error", this->clusterId);
+                if (!this->isLeader()) {
+                    return CABINET_OK;
+                }
                 continue;
             }
         }
@@ -229,7 +232,7 @@ int Cluster::cron() {
     }
 
     if (this->isFollower()) {
-        logDebug("cluster cluster_id[%d] work as follower", this->clusterId);
+        logDebug("cluster cluster_id[%d] work as follower, term[%ld]", this->clusterId, this->currentTerm);
         long currentUnixTimeInMs = Util::getCurrentTimeInMs();
         long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
         if (gap > this->electionTimeout) {
@@ -244,7 +247,7 @@ int Cluster::cron() {
     }
 
     if (this->isCandidate()) {
-        logDebug("cluster cluster_id[%d] work as candidate", this->clusterId);
+        logDebug("cluster cluster_id[%d] work as candidate, term[%ld]", this->clusterId, this->currentTerm);
         long currentUnixTimeInMs = Util::getCurrentTimeInMs();
         long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
         if (gap > this->electionTimeout) {
@@ -294,21 +297,12 @@ int Cluster::toLead() {
     logNotice("cluster cluster_id[%d] to lead", this->clusterId);
     this->setClusterRole(Cluster::LEADER);
     this->votedFor = -1;
-    ++this->currentTerm;
-
-    //vector<ClusterClient *> onlineSiblings = this->siblings->getSiblingsNeedAppendEntry();
-    //Command &firstAppendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
-    //for (ClusterClient *sibling : onlineSiblings) {
-    //    if ((firstAppendEntryCommand >> sibling) == CABINET_ERR) {
-    //        logWarning("cluster cluster_id[%d] first append entry to sibling error", this->clusterId);
-    //        continue;
-    //    }
-    //}
 
     Entry lastEntry;
     this->pf->findLastEntry(lastEntry);
     this->lastEntryIndex = lastEntry.getIndex();
-    this->siblings->setNextIndexBatch(this->lastEntryIndex);
+    long nextIndex = this->lastEntryIndex + 1;
+    this->siblings->setNextIndexBatch(nextIndex);
     this->siblings->setMatchIndexBatch(0);
     this->siblings->setAlreadyAppendEntryBatch(false);
 
@@ -348,7 +342,7 @@ int Cluster::toCandidate() {
 }
 
 int Cluster::setNewEntryIndexAndTerm(Entry &entry) {
-    entry.setIndex(this->lastEntryIndex);    
+    entry.setIndex(++this->lastEntryIndex);    
     entry.setTerm(this->currentTerm);
     return CABINET_OK;
 }

@@ -30,7 +30,7 @@ int AppendEntryCommand::operator>>(Client *client) const {
     logDebug("cluster cluster_id[%d] append entry to cluster[%d]", leaderId, clientId);
     Siblings *siblings = cluster->getSiblings();
     long nextEntryIndex = siblings->getSiblingNextIndex(clientId);
-    if (nextEntryIndex == CABINET_ERR) {
+    if (nextEntryIndex == CABINET_ERR || nextEntryIndex < 1) {
         logFatal("append entry into invalid sibling with wrong cluster id!");
         exit(1);
     }
@@ -43,25 +43,47 @@ int AppendEntryCommand::operator>>(Client *client) const {
     long lastLogIndex = lastEntry.getIndex();
 
     Entry nextEntry;
-    if (nextEntryIndex > 0) {
-        if ((pf->findEntry(nextEntryIndex, nextEntry) == CABINET_ERR) &&
-                (nextEntryIndex > (lastLogIndex + 1))) {
-            logNotice("cluster cluster_id[%d] does not contain necessary entry to append, change to follower", 
-                    leaderId);
+    long index = 0;
+    long term = 0;
+    string entryCommand;
+    //next log not exist yet
+    if (pf->findEntry(nextEntryIndex, nextEntry) == CABINET_ERR) {
+        if (nextEntryIndex > (lastLogIndex + 1)) {
+            logNotice("cluster cluster_id[%d] not contain entry to append, next_index[%ld] change to follower", 
+                    leaderId, nextEntryIndex);
             cluster->toFollow(cluster->getTerm());
             return CABINET_OK;
         }
+        //set empty append entry
+        if (siblings->setEmptyAppendEntry(clientId, true) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] set empty append entry cluster[%d] to [true] error");
+            return CABINET_ERR;
+        }
     }
-    long index = nextEntry.getIndex();
-    long term = nextEntry.getTerm();
-    string entryCommand = nextEntry.getContent();
+    else {
+        index = nextEntry.getIndex();
+        term = nextEntry.getTerm();
+        entryCommand = nextEntry.getContent();
+        //set empty append entry
+        if (siblings->setEmptyAppendEntry(clientId, false) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] set empty append entry cluster[%d] to [false] error");
+            return CABINET_ERR;
+        }
+    }
 
     Entry entryBeforeNextEntry;
+    long prevLogIndex = 0;
+    long prevLogTerm = 0;
     if (nextEntryIndex > 1) {
-        pf->findEntry(nextEntryIndex - 1, entryBeforeNextEntry);
+        if (pf->findEntry(nextEntryIndex - 1, entryBeforeNextEntry) == CABINET_ERR) {
+            logWarning("cluster cluster_id[%d] lose entry before next_index[%ld] when append entry to cluster[%d]",
+                leaderId, clientId);
+            cluster->toFollow(cluster->getTerm());
+            return CABINET_OK;
+        }
+        prevLogIndex = entryBeforeNextEntry.getIndex();
+        prevLogTerm = entryBeforeNextEntry.getTerm();
     }
-    long prevLogIndex = entryBeforeNextEntry.getIndex();
-    long prevLogTerm = entryBeforeNextEntry.getTerm();
 
     if (siblings->setAlreadyAppendEntry(clientId, true) == CABINET_ERR) {
         logWarning("cluster cluster_id[%d] set cluster[%d] already append entry[true] error", leaderId, clientId);
@@ -143,16 +165,27 @@ int AppendEntryCommand::operator[](Client *client) const {
 
 
     //验证term的正确性
+    //1. 如果当前主机是follower, 收到的term大于它, 变为新的follower
+    //2. 如果当前主机是candidate, 收到的term大于等于它就变成follower
+    //3. 如果当前主机是leader, 收到的term大于它, 变为follower, 等于它, fatal一下, 变为follower
     long term = cluster->getTerm();
-    if (cluster->isCandidate() || cluster->isLeader()) {
+    if (cluster->isFollower()) {
         if (term < leaderTerm) {
-            logNotice("cluster cluster_id[%d] receive append entry from cluster[%d] with high term, to follow", 
+            logNotice("cluster cluster_id[%d] follower receive append entry from cluster[%d] with higher term, to follow", 
+                    followerId, leaderId);
+            cluster->toFollow(leaderTerm);
+            term = cluster->getTerm();
+        }
+    }
+    else if (cluster->isCandidate()) {
+        if (term <= leaderTerm) {
+            logNotice("cluster cluster_id[%d] candidate receive append entry from cluster[%d] with euqal or high term, to follow", 
                     followerId, leaderId);
             cluster->toFollow(leaderTerm);
             term = cluster->getTerm();
         }
         else {
-            logDebug("cluster cluster_id[%d] is leader or candidate with equal or higher term, reject append entry from cluster[%d]", 
+            logDebug("cluster cluster_id[%d] is candidate with higher term, reject append entry from cluster[%d]", 
                     followerId, leaderId);
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
@@ -164,6 +197,33 @@ int AppendEntryCommand::operator[](Client *client) const {
             return CABINET_OK;
         }
     }
+    else if (cluster->isLeader()) {
+        if (term < leaderTerm) {
+            logNotice("cluster cluster_id[%d] leader receive append entry from cluster[%d] with higher term, to follow", 
+                    followerId, leaderId);
+            cluster->toFollow(leaderTerm);
+            term = cluster->getTerm();
+        }
+        else if (term == leaderTerm) {
+            logNotice("cluster cluster_id[%d] leader receive append entry from cluster[%d] with equal term, to follow", 
+                    followerId, leaderId);
+            cluster->toFollow(leaderTerm);
+            term = cluster->getTerm();
+        }
+        else {
+            logDebug("cluster cluster_id[%d] is leader with higher term, reject append entry from cluster[%d]", 
+                    followerId, leaderId);
+            client->initReplyHead(5);
+            client->appendReplyType(this->commandType());
+            client->appendReplyBody("replyappendentry");
+            client->appendReplyBody("term");
+            client->appendReplyBody(std::to_string(term));
+            client->appendReplyBody("success");
+            client->appendReplyBody("false");
+            return CABINET_OK;
+        }
+    }
+
     if (!cluster->isFollower()) {
         logFatal("only follower execute here");
         exit(1);

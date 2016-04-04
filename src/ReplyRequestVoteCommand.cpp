@@ -33,7 +33,7 @@ int ReplyRequestVoteCommand::operator[](Client *client) const {
     }
     
     if (replyTerm > term) {
-        logNotice("cluster cluster_id[%d] receive reply request vote from cluster[%d] has high term, to follow", 
+        logNotice("cluster cluster_id[%d] receive reply request vote from cluster[%d] has higher term, to follow", 
                 clusterId, voterId);
         cluster->toFollow(replyTerm);
         return CABINET_OK;

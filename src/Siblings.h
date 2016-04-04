@@ -31,6 +31,8 @@ public:
     void setMatchIndex(int clusterId, long newMatchIndex);
     int setAlreadyAppendEntry(int clusterId, bool already);
     void setAlreadyAppendEntryBatch(bool alreadyBatch);
+    int setEmptyAppendEntry(int clusterId, bool empty);
+    int getEmptyAppendEntry(const int clusterId, bool &empty);
 
     int getLeaderId() const {return this->currentLeaderId;}
     void setLeaderId(int leaderId) {this->currentLeaderId = leaderId;}
@@ -56,5 +58,6 @@ private:
     map<string, int> ipPortClusterIdMap;
     map<int, bool> connectTrying;
     map<int, bool> alreadyAppendEntry;
+    map<int, bool> emptyAppendEntry;
 };
 #endif

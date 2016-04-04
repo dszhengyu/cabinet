@@ -37,8 +37,8 @@ do
     sed "s/SERVER_IP_PLACEHOLDER/${cluster_server_ip}/g" -i $conf_file
     sed "s/SERVER_PORT_PLACEHOLDER/${cluster_server_port}/g" -i $conf_file
 
-    ./cabinet-server
-    ./cabinet-cluster
+    ./cabinet-server ${cluster_server_port}
+    ./cabinet-cluster id=${id} port=${cluster_port}
     
     echo ""
 done

@@ -16,7 +16,8 @@ Siblings::Siblings(Cluster *cluster):
     currentLeaderId(-1),
     ipPortClusterIdMap(),
     connectTrying(),
-    alreadyAppendEntry()
+    alreadyAppendEntry(),
+    emptyAppendEntry()
 {
 }
 
@@ -313,3 +314,25 @@ void Siblings::setAlreadyAppendEntryBatch(bool alreadyBatch) {
         this->alreadyAppendEntry[clusterId] = alreadyBatch;
     }
 }
+
+int Siblings::setEmptyAppendEntry(int clusterId, bool empty) {
+    logDebug("cluster cluster_id[%d] set cluster[%d] emptyAppendEntry[%s]", this->clusterId, clusterId,
+            (empty ? "true" : "false"));
+    if (this->validateClusterId(clusterId) == CABINET_ERR) {
+        logWarning("set empty append entry error with invalid id, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+    this->emptyAppendEntry[clusterId] = empty;
+    return CABINET_OK;
+}
+
+int Siblings::getEmptyAppendEntry(const int clusterId, bool &empty) {
+    logDebug("cluster cluster_id[%d] get cluster[%d] emptyAppendEntry", this->clusterId, clusterId);
+    if (this->validateClusterId(clusterId) == CABINET_ERR) {
+        logWarning("get empty append entry error with invalid id, id[%d]", clusterId);
+        return CABINET_ERR;
+    }
+    empty = this->emptyAppendEntry[clusterId];
+    return CABINET_OK;
+}
+

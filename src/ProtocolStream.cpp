@@ -146,8 +146,8 @@ int ProtocolStream::resolveReceiveBuf() {
 
     //开始解析参数
     while (this->isReceiveBufAvaliable()) {
-        size_t firstLF = this->inputBuf.find_first_of('\n');
         if (this->curArgvLen == -1) {
+            size_t firstLF = this->inputBuf.find_first_of('\n');
             //logDebug("searching for argv len");
             //当前参数长度未解析
             if (this->inputBuf[0] != '$') {
@@ -163,14 +163,14 @@ int ProtocolStream::resolveReceiveBuf() {
         else {
             //按照长度获取当前参数
             //logDebug("searching for argv");
-            if ((long)firstLF != this->curArgvLen) {
+            if (this->inputBuf[this->curArgvLen] != '\n') {
                 logWarning("protocol stream input format error, missing argv, input_buf[%s]", this->inputBuf.c_str());
                 return CABINET_ERR;
             }
-            this->argv.push_back(string(this->inputBuf, 0, firstLF));
+            this->argv.push_back(string(this->inputBuf, 0, this->curArgvLen));
+            this->curCommandBuf.append(this->inputBuf, 0, this->curArgvLen + 1);
+            this->inputBuf.erase(0, this->curArgvLen + 1);
             this->curArgvLen = -1;
-            this->curCommandBuf.append(this->inputBuf, 0, firstLF + 1);
-            this->inputBuf.erase(0, firstLF + 1);
             //logDebug("argv get, argv[%s]", (this->argv.end() - 1)->c_str());
             --this->argc;
             if (this->argc == 0) {

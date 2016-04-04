@@ -33,13 +33,15 @@ public:
     void setAlreadyAppendEntryBatch(bool alreadyBatch);
     int setEmptyAppendEntry(int clusterId, bool empty);
     int getEmptyAppendEntry(const int clusterId, bool &empty);
+    void checkIfEntryCouldCommit(long index);
 
     int getLeaderId() const {return this->currentLeaderId;}
     void setLeaderId(int leaderId) {this->currentLeaderId = leaderId;}
+    int clusterTotalNumber() const {return this->clusterIdVector.size() + 1;}
+    int clusterHalfNumber() const {return this->clusterTotalNumber() / 2 + 1;}
 
     int getLeaderIPAndPort(string &ip, int &port);
     int confirmConnectSibling(ClusterClient *sibling);
-
     int shutDown();
 
 private:

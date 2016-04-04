@@ -74,16 +74,28 @@ int PersistenceFile::deleteEntryAfter(long index) {
 
 int PersistenceFile::getNextPFEntry(Entry &entry) {
     logDebug("get next pf[%s] entry", this->pFName.c_str());
+    this->pFIn >> entry;
     if (!this->pFIn.good()) {
         return CABINET_ERR;
     }
-    this->pFIn >> entry;
     return CABINET_OK;
 }
 
 int PersistenceFile::resetFileStream() {
-    this->pFIn.seekg(0, this->pFIn.beg);
+    logDebug("reset file stream");
+    //this->pFIn.seekg(0, this->pFIn.beg);
+    this->pFIn.close();
+    this->pFIn.open(this->pFName);
     if (!this->pFIn.good()) {
+        if (this->pFIn.fail()) {
+            logDebug("reset file stream error[fail]");
+        }
+        if (this->pFIn.eof()) {
+            logDebug("reset file stream error[eof]");
+        }
+        if (this->pFIn.bad()) {
+            logDebug("reset file stream error[bad]");
+        }
         return CABINET_ERR;
     }
     return CABINET_OK;

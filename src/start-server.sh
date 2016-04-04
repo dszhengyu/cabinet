@@ -1,6 +1,6 @@
 #!/bin/bash
 #set -x
 
-sh "stop-cabinet.sh"
+sh "stop-server.sh"
 
 ./cabinet-server &

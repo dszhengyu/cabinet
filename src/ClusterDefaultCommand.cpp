@@ -13,9 +13,10 @@
  *      retry
  */
 int ClusterDefaultCommand::operator[](Client *client) const {
-    logDebug("receive client request");
     ClusterClient *clusterClient = (ClusterClient *) client;
     Cluster *cluster = clusterClient->getClusterPtr();
+    int clusterId = cluster->getClusterId();
+    logDebug("cluster cluster[%d] receive client request", clusterId);
 
     if (cluster->isLeader()) {
         const string &wholeCommand = client->getCurCommandBuf();
@@ -24,15 +25,13 @@ int ClusterDefaultCommand::operator[](Client *client) const {
         long newEntryIndex = newEntry.getIndex();
         PersistenceFile *pf = cluster->getPersistenceFile();
         if (pf->appendToPF(newEntry) == CABINET_ERR) {
-            logWarning("cluster cluster_id[%d] append to pf fail, change to follower",
-                    cluster->getClusterId());
+            logWarning("cluster cluster_id[%d] append to pf fail, change to follower", clusterId);
             cluster->toFollow(cluster->getTerm());
             return CABINET_OK;
         }
         Parents *parents = cluster->getParents();
         if (parents->setDealingIndex(newEntryIndex, clusterClient) == CABINET_ERR) {
-            logWarning("cluster cluster_id[%d] set parents dealing index fail",
-                    cluster->getClusterId());
+            logWarning("cluster cluster_id[%d] set parents dealing index fail", clusterId);
             return CABINET_ERR;
         }
         return CABINET_OK;

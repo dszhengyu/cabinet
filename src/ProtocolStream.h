@@ -38,7 +38,7 @@ private:
     string curCommandBuf;
     int argc;//argc三种状态: -1, 没有命令;0, 命令解析完成, 等待执行; >0, 命令还在解析中
     vector<string> argv;
-    long curArgvLen;
+    int curArgvLen;
     bool receiveComplete;
     char commandType;
     string outputBuf;

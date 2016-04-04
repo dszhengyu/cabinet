@@ -18,7 +18,7 @@ int FlushServerCommand::operator>>(Client *client) const {
     }
 
     if (commitIndex < lastApplied) {
-        logFatal("something wrong with commitIndex and lastApplied");
+        logFatal("something wrong with commitIndex and lastApplied, program fail");
         exit(1);
     }
 

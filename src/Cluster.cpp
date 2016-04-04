@@ -172,7 +172,7 @@ int Cluster::deleteClient(Client *client) {
  *       2. 根据不同角色做不同的事情
  */
 int Cluster::cron() {
-    logDebug("cluster cluster_id[%d] start cron, role[%c], term[%ld]", this->clusterId, this->role, this->currentTerm);
+    //logDebug("cluster cluster_id[%d] start cron, role[%c], term[%ld]", this->clusterId, this->role, this->currentTerm);
     //judge whether meet working baseline
     this->meetWorkingBaseline = this->siblings->satisfyWorkingBaseling() && this->children->satisfyWorkingBaseling();
     //reconnect if baseline not achieved
@@ -344,6 +344,7 @@ int Cluster::toCandidate() {
 int Cluster::setNewEntryIndexAndTerm(Entry &entry) {
     entry.setIndex(++this->lastEntryIndex);    
     entry.setTerm(this->currentTerm);
+    logDebug("set new entry index[%ld] term[%ld]", entry.getIndex(), entry.getTerm());
     return CABINET_OK;
 }
 

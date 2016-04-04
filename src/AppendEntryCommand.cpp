@@ -256,6 +256,7 @@ int AppendEntryCommand::operator[](Client *client) const {
     }
     else {
         Entry prevEntry;
+        //确认leaderPrevLogIndex 对应的entry在本机的log之中
         if (pf->findEntry(leaderPrevLogIndex, prevEntry) == CABINET_ERR) {
             logDebug("cluster cluster_id[%d] can not find leader prevlog in pf, reject append entry from cluster[%d]", 
                     followerId, leaderId);
@@ -269,6 +270,7 @@ int AppendEntryCommand::operator[](Client *client) const {
             return CABINET_OK;
         }
 
+        //确认对应的entry的term也是正确的
         if (prevEntry.getTerm() != leaderPrevLogTerm) {
             logDebug("cluster cluster_id[%d] find leader prev log in pf with same index but different term, \
                     reject append entry from cluster[%d]", 
@@ -282,6 +284,19 @@ int AppendEntryCommand::operator[](Client *client) const {
             client->appendReplyBody("success");
             client->appendReplyBody("false");
             return CABINET_OK;
+        }
+
+        //如果这个entry不是最后一个entry, 删除它之后的, 使它成为最后一个entry
+        Entry lastEntry;
+        if (pf->findLastEntry(lastEntry) == CABINET_ERR) {
+            logFatal("cluster cluster_id[%d] should not execute here, program fail, please check", followerId);
+            exit(1);
+        }
+        if ((lastEntry.getIndex() != leaderPrevLogIndex) || (lastEntry.getTerm() != leaderPrevLogTerm)) {
+            logDebug("cluster cluster_id[%d] get cluster[%d] append entry, find prev entry, but not the last entry,\
+                    deleting the entry after the prev(no including the prev entry)",
+                    followerId, leaderId);
+            pf->deleteEntryAfter(leaderPrevLogIndex + 1);
         }
     }
 

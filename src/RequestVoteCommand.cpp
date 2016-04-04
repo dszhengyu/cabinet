@@ -74,7 +74,8 @@ int RequestVoteCommand::operator[](Client *client) const {
         logFatal("receive request vote argc error, receive exception, what[%s]", e.what());
         exit(1);
     }
-    logDebug("cluster cluster_id[%d] receive request vote from cluster[%d]", ticketHolderId, candidateId);
+    logDebug("cluster cluster_id[%d] receive request vote from cluster[%d], cluster[%d] already vote for cluster[%d]", 
+            ticketHolderId, candidateId, ticketHolderId, cluster->alreadyVotedFor());
 
     long term = cluster->getTerm();
     PersistenceFile *pf = cluster->getPersistenceFile();

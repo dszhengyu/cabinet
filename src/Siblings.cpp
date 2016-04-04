@@ -37,7 +37,7 @@ int Siblings::recognizeSiblings(Configuration &conf) {
             if (idReading == this->clusterId) {
                 continue;
             }
-            clusterIdVector.push_back(idReading);
+            this->clusterIdVector.push_back(idReading);
             string ip = conf[string("CLUSTER_IP_") + std::to_string(idReading)];
             int port = std::stoi(conf[string("CLUSTER_PORT_") + std::to_string(idReading)]);
             this->ipMap[idReading] = ip;
@@ -238,7 +238,7 @@ int Siblings::decreaseSiblingNextIndex(int clusterId) {
         logWarning("get sibling next index error with invalid id, id[%d]", clusterId);
         return CABINET_ERR;
     }
-    --this->matchIndexMap[clusterId];
+    --this->nextIndexMap[clusterId];
     return CABINET_OK;
 }
 
@@ -316,8 +316,8 @@ void Siblings::setAlreadyAppendEntryBatch(bool alreadyBatch) {
 }
 
 int Siblings::setEmptyAppendEntry(int clusterId, bool empty) {
-    logDebug("cluster cluster_id[%d] set cluster[%d] emptyAppendEntry[%s]", this->clusterId, clusterId,
-            (empty ? "true" : "false"));
+    //logDebug("cluster cluster_id[%d] set cluster[%d] emptyAppendEntry[%s]", this->clusterId, clusterId,
+    //        (empty ? "true" : "false"));
     if (this->validateClusterId(clusterId) == CABINET_ERR) {
         logWarning("set empty append entry error with invalid id, id[%d]", clusterId);
         return CABINET_ERR;
@@ -327,12 +327,36 @@ int Siblings::setEmptyAppendEntry(int clusterId, bool empty) {
 }
 
 int Siblings::getEmptyAppendEntry(const int clusterId, bool &empty) {
-    logDebug("cluster cluster_id[%d] get cluster[%d] emptyAppendEntry", this->clusterId, clusterId);
+    //logDebug("cluster cluster_id[%d] get cluster[%d] emptyAppendEntry", this->clusterId, clusterId);
     if (this->validateClusterId(clusterId) == CABINET_ERR) {
         logWarning("get empty append entry error with invalid id, id[%d]", clusterId);
         return CABINET_ERR;
     }
     empty = this->emptyAppendEntry[clusterId];
     return CABINET_OK;
+}
+
+void Siblings::checkIfEntryCouldCommit(long index) {
+    logDebug("cluster cluster_id[%d] check if entry could commit, index[%ld]", this->clusterId, index);
+    long clusterIndex = this->cluster->getIndex();
+    if (clusterIndex >= index) {
+        logDebug("cluster cluster_id[%d] already commit entry with index[%ld]", this->clusterId, index);
+        return; 
+    }
+
+    int matchTotal = 0;
+    for (int clusterId : this->clusterIdVector) {
+        if (this->matchIndexMap[clusterId] >= index) {
+            ++matchTotal;
+        }
+    }
+    if (matchTotal < this->clusterHalfNumber()) {
+        logDebug("cluster cluster_id[%d] entry index[%ld] could not commit yet", this->clusterId, index);
+        return;
+    }
+
+    logDebug("cluster cluster_id[%d] entry index[%ld] could commit now!", this->clusterId, index);
+    this->cluster->setIndex(index);
+    return;
 }
 

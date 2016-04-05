@@ -14,11 +14,11 @@ ServerClient::ServerClient(long clientId, int fd, const string &ip, const int po
  *
  */
 int ServerClient::executeCommand() {
-    logNotice("server client execute command");
+    //logDebug("server client execute command");
     const string &commandName = this->protocolStream.getCommandName();
     Command &selectedCommand = this->commandKeeper->selectCommand(commandName);
 
-    logDebug("client category[%c]", this->category);
+    //logDebug("client category[%c]", ((this->category == '\0') ? 'C' : this->category);
 
     //do pf
     if ((this->category != Client::LOCAL_PF_CLIENT) && 

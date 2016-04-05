@@ -12,7 +12,7 @@ int ReplyRequestVoteCommand::operator[](Client *client) const {
     Cluster *cluster = clusterClient->getClusterPtr();
     int clusterId = cluster->getClusterId();
     int voterId = clusterClient->getClusterId();
-    logDebug("cluster cluster_id[%d] receive reply for request vote from cluster[%d]", clusterId, voterId);
+    //logDebug("cluster cluster_id[%d] receive reply for request vote from cluster[%d]", clusterId, voterId);
     if (!cluster->isCandidate()) {
         //reply might come after the role has changed, just ignore it 
         logWarning("cluster cluster_id[%d] is not a candidate, ignore reply request vote from cluster[%d]", clusterId, voterId);

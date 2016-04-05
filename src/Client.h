@@ -40,6 +40,7 @@ public:
     int appendReplyType(const char commandType);
     int appendReplyBody(const string &);
     int appendReplyBody(const char *);
+    void printSendBuf() const;
 
     //category relative
     char getCategory() const {return this->category;}

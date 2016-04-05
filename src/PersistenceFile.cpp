@@ -17,7 +17,7 @@ int PersistenceFile::appendToPF(const Entry &entry) {
 }
 
 int PersistenceFile::findEntry(const long index, Entry &entry) {
-    logDebug("find entry in pf[%s], index[%ld]", this->pFName.c_str(), index);
+    //logDebug("find entry in pf[%s], index[%ld]", this->pFName.c_str(), index);
     this->resetFileStream();
     while (this->getNextPFEntry(entry) != CABINET_ERR) {
         if (entry.getIndex() == index) {
@@ -28,9 +28,13 @@ int PersistenceFile::findEntry(const long index, Entry &entry) {
 }
 
 int PersistenceFile::findLastEntry(Entry &entry) {
-    logDebug("find last entry in pf[%s]", this->pFName.c_str());
+    //logDebug("find last entry in pf[%s]", this->pFName.c_str());
     if (this->resetFileStream() == CABINET_ERR) {
-        logNotice("empty pf[%s]", this->pFName.c_str());
+        //logNotice("empty pf[%s]", this->pFName.c_str());
+        return CABINET_ERR;
+    }
+    if (this->getNextPFEntry(entry) == CABINET_ERR) {
+        //logNotice("empty pf[%s]", this->pFName.c_str());
         return CABINET_ERR;
     }
     while (this->getNextPFEntry(entry) != CABINET_ERR) {
@@ -73,7 +77,7 @@ int PersistenceFile::deleteEntryAfter(long index) {
 }
 
 int PersistenceFile::getNextPFEntry(Entry &entry) {
-    logDebug("get next pf[%s] entry", this->pFName.c_str());
+    //logDebug("get next pf[%s] entry", this->pFName.c_str());
     this->pFIn >> entry;
     if (!this->pFIn.good()) {
         return CABINET_ERR;
@@ -82,7 +86,7 @@ int PersistenceFile::getNextPFEntry(Entry &entry) {
 }
 
 int PersistenceFile::resetFileStream() {
-    logDebug("reset file stream");
+    //logDebug("reset file stream");
     //this->pFIn.seekg(0, this->pFIn.beg);
     this->pFIn.close();
     this->pFIn.open(this->pFName);

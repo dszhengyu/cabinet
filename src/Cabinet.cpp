@@ -29,7 +29,7 @@ int Cabinet::listenOnPort(int port) {
  *      成功返回描述符, 失败打印日志, 返回错误
  */
 int Cabinet::getConnectFd(int listenFd, string &strIP, int &port) {
-    logDebug("server get client connect");
+    //logDebug("server get client connect");
     int connectFd;
     if ((connectFd = Util::acceptTcp(listenFd, strIP, port)) == CABINET_ERR) {
         logWarning("accept connect error");

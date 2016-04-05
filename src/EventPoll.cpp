@@ -172,8 +172,7 @@ int EventPoll::processEvent() {
                 }
                 Client *processingClient = readFileEventMap[eventFd];
                 if (processingClient->fillReceiveBuf() == CABINET_ERR) {
-                    logWarning("client client_id[%d] fill input buf error, maybe client close connection, close it", 
-                            processingClient->getClientId());
+                    logDebug("client client_id[%d] close connection, close it", processingClient->getClientId());
                     this->deleteClient(processingClient);
                     continue;
                 }

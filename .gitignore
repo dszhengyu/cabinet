@@ -4,3 +4,4 @@ src/*.pf*
 src/cabinet-cluster
 src/cabinet-server
 src/cabinet-cli
+src/.*swp

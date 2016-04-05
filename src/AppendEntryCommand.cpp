@@ -27,7 +27,7 @@ int AppendEntryCommand::operator>>(Client *client) const {
 
     int clientId = clusterClient->getClusterId();
     int leaderId = cluster->getClusterId();
-    logDebug("cluster cluster_id[%d] append entry to cluster[%d]", leaderId, clientId);
+    //logDebug("cluster cluster_id[%d] append entry to cluster[%d]", leaderId, clientId);
     Siblings *siblings = cluster->getSiblings();
     long nextEntryIndex = siblings->getSiblingNextIndex(clientId);
     if (nextEntryIndex == CABINET_ERR || nextEntryIndex < 1) {
@@ -108,6 +108,7 @@ int AppendEntryCommand::operator>>(Client *client) const {
     client->appendReplyBody(entryCommand);
     client->appendReplyBody("leaderCommit");
     client->appendReplyBody(std::to_string(commitIndex));
+    //client->printSendBuf();
     return CABINET_OK;
 }
 
@@ -161,7 +162,7 @@ int AppendEntryCommand::operator[](Client *client) const {
         exit(1);
     }
 
-    logDebug("cluster cluster_id[%d] receive append entry from cluster[%d]", followerId, leaderId);
+    //logDebug("cluster cluster_id[%d] receive append entry from cluster[%d]", followerId, leaderId);
 
 
     //验证term的正确性
@@ -185,8 +186,7 @@ int AppendEntryCommand::operator[](Client *client) const {
             term = cluster->getTerm();
         }
         else {
-            logDebug("cluster cluster_id[%d] is candidate with higher term, reject append entry from cluster[%d]", 
-                    followerId, leaderId);
+            //logDebug("cluster cluster_id[%d] is candidate with higher term, reject append entry from cluster[%d]", followerId, leaderId);
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
             client->appendReplyBody("replyappendentry");
@@ -194,6 +194,7 @@ int AppendEntryCommand::operator[](Client *client) const {
             client->appendReplyBody(std::to_string(term));
             client->appendReplyBody("success");
             client->appendReplyBody("false");
+            //client->printSendBuf();
             return CABINET_OK;
         }
     }
@@ -211,8 +212,8 @@ int AppendEntryCommand::operator[](Client *client) const {
             term = cluster->getTerm();
         }
         else {
-            logDebug("cluster cluster_id[%d] is leader with higher term, reject append entry from cluster[%d]", 
-                    followerId, leaderId);
+            //logDebug("cluster cluster_id[%d] is leader with higher term, reject append entry from cluster[%d]", 
+            //        followerId, leaderId);
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
             client->appendReplyBody("replyappendentry");
@@ -220,6 +221,7 @@ int AppendEntryCommand::operator[](Client *client) const {
             client->appendReplyBody(std::to_string(term));
             client->appendReplyBody("success");
             client->appendReplyBody("false");
+            //client->printSendBuf();
             return CABINET_OK;
         }
     }
@@ -241,9 +243,9 @@ int AppendEntryCommand::operator[](Client *client) const {
     if (leaderPrevLogIndex == 0) {
         Entry lastEntry;
         if (pf->findLastEntry(lastEntry) != CABINET_ERR) {
-            logDebug("cluster cluster_id[%d] get prevLogIndex[0] from cluster[%d], but have log in local pf,\
-                    reject append entry from cluster[%d]", 
-                    followerId, leaderId, leaderId);
+            //logDebug("cluster cluster_id[%d] get prevLogIndex[0] from cluster[%d], but have log in local pf,
+            //        reject append entry from cluster[%d]", 
+            //        followerId, leaderId, leaderId);
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
             client->appendReplyBody("replyappendentry");
@@ -251,6 +253,7 @@ int AppendEntryCommand::operator[](Client *client) const {
             client->appendReplyBody(std::to_string(term));
             client->appendReplyBody("success");
             client->appendReplyBody("false");
+            //client->printSendBuf();
             return CABINET_OK;
         }
     }
@@ -258,8 +261,8 @@ int AppendEntryCommand::operator[](Client *client) const {
         Entry prevEntry;
         //确认leaderPrevLogIndex 对应的entry在本机的log之中
         if (pf->findEntry(leaderPrevLogIndex, prevEntry) == CABINET_ERR) {
-            logDebug("cluster cluster_id[%d] can not find leader prevlog in pf, reject append entry from cluster[%d]", 
-                    followerId, leaderId);
+            //logDebug("cluster cluster_id[%d] can not find leader prevlog in pf, reject append entry from cluster[%d]", 
+            //    followerId, leaderId);
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
             client->appendReplyBody("replyappendentry");
@@ -267,14 +270,15 @@ int AppendEntryCommand::operator[](Client *client) const {
             client->appendReplyBody(std::to_string(term));
             client->appendReplyBody("success");
             client->appendReplyBody("false");
+            //client->printSendBuf();
             return CABINET_OK;
         }
 
         //确认对应的entry的term也是正确的
         if (prevEntry.getTerm() != leaderPrevLogTerm) {
-            logDebug("cluster cluster_id[%d] find leader prev log in pf with same index but different term, \
-                    reject append entry from cluster[%d]", 
-                    followerId, leaderId);
+            //logDebug("cluster cluster_id[%d] find leader prev log in pf with same index but different term, 
+            //        reject append entry from cluster[%d]", 
+            //        followerId, leaderId);
             pf->deleteEntryAfter(leaderPrevLogIndex);
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
@@ -283,6 +287,7 @@ int AppendEntryCommand::operator[](Client *client) const {
             client->appendReplyBody(std::to_string(term));
             client->appendReplyBody("success");
             client->appendReplyBody("false");
+            //client->printSendBuf();
             return CABINET_OK;
         }
 
@@ -300,13 +305,24 @@ int AppendEntryCommand::operator[](Client *client) const {
         }
     }
 
+    //检查是否有新的entry需要append
     if (leaderEntryIndex != 0 && leaderEntryTerm != 0) {
         //append entry
         Entry newEntry(leaderEntryIndex, leaderEntryTerm, entryCommand);
         pf->appendToPF(newEntry);
-        long newCommitIndex = std::min(leaderCommit, cluster->getIndex());
+    }
+
+    //检查是否有entry在leader已经commit, 如果有, 更新当前主机的commitIndex
+    if (leaderCommit != 0) {
+        Entry lastEntry;
+        if (pf->findLastEntry(lastEntry) == CABINET_ERR) {
+            logFatal("cluster cluster_id[%d] should execute correct here, persistence file fail, please check", followerId);
+            exit(1);
+        }
+        long newCommitIndex = std::min(leaderCommit, lastEntry.getIndex());
         cluster->setIndex(newCommitIndex);
     }
+
     client->initReplyHead(5);
     client->appendReplyType(this->commandType());
     client->appendReplyBody("replyappendentry");
@@ -314,5 +330,6 @@ int AppendEntryCommand::operator[](Client *client) const {
     client->appendReplyBody(std::to_string(term));
     client->appendReplyBody("success");
     client->appendReplyBody("true");
+    //client->printSendBuf();
     return CABINET_OK;
 }

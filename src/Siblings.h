@@ -22,6 +22,7 @@ public:
     vector<ClusterClient *> getSiblingsNeedAppendEntry();
     bool satisfyWorkingBaseling();
     int connectLostSiblings();
+    bool haveConnectAllSiblings();
 
     long getSiblingNextIndex(int clusterId);
     int increaseSiblingNextIndex(int clusterId);

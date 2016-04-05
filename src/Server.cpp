@@ -26,7 +26,7 @@ void Server::initConfig() {
     try{
         this->serverId = std::stoi(conf["SERVER_ID"]);
         this->port = std::stoi(conf["SERVER_PORT"]);;
-        this->pfName = conf["SERVER_PF_NAME"];
+        this->pfName = conf["SERVER_PF_NAME"] + "." + conf["SERVER_ID"];
         this->allowPF = conf["SERVER_PF"];
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());

@@ -45,9 +45,9 @@ Parents::queueIter Parents::findParentsInQueue(ClusterClient *parents) {
 }
 
 int Parents::setDealingIndex(long dealingIndex, ClusterClient *parent) {
-    logDebug("cluster cluster_id[%d] set dealing index in parents", this->cluster->getClusterId());
+    logDebug("cluster cluster_id[%d] set dealing_index[%ld] in parents", this->cluster->getClusterId(), dealingIndex);
     if (this->findParentsInQueue(parent) == this->parentsQueue.end()) {
-        logWarning("cluster cluster_id[%d] set dealing index to no-exist parents", this->cluster->getClusterId());
+        logWarning("cluster cluster_id[%d] set dealing_index[%ld] to no-exist parents", this->cluster->getClusterId(), dealingIndex);
         return CABINET_ERR;
     }
 
@@ -62,6 +62,11 @@ ClusterClient *Parents::getParentsByDealingIndex(long dealingIndex) {
    ClusterClient *parent = this->dealingIndexParentsMap[dealingIndex];
    this->dealingIndexParentsMap.erase(dealingIndex);
    return parent;
+}
+
+void Parents::clearDealingIndex() {
+    this->dealingIndexParentsMap.clear();
+    return;
 }
 
 int Parents::shutDown() {

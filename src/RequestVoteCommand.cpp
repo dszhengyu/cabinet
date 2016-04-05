@@ -38,6 +38,7 @@ int RequestVoteCommand::operator>>(Client *client) const {
     client->appendReplyBody(std::to_string(lastLogIndex));
     client->appendReplyBody("lastLogTerm");
     client->appendReplyBody(std::to_string(lastLogTerm));
+    //client->printSendBuf();
     return CABINET_OK;
 }
 
@@ -74,8 +75,8 @@ int RequestVoteCommand::operator[](Client *client) const {
         logFatal("receive request vote argc error, receive exception, what[%s]", e.what());
         exit(1);
     }
-    logDebug("cluster cluster_id[%d] receive request vote from cluster[%d], cluster[%d] already vote for cluster[%d]", 
-            ticketHolderId, candidateId, ticketHolderId, cluster->alreadyVotedFor());
+    //logDebug("cluster cluster_id[%d] receive request vote from cluster[%d], cluster[%d] already vote for cluster[%d]", 
+    //        ticketHolderId, candidateId, ticketHolderId, cluster->alreadyVotedFor());
 
     long term = cluster->getTerm();
     PersistenceFile *pf = cluster->getPersistenceFile();
@@ -101,6 +102,7 @@ int RequestVoteCommand::operator[](Client *client) const {
         client->appendReplyBody(std::to_string(term));
         client->appendReplyBody("voteGranted");
         client->appendReplyBody("false");
+        //client->printSendBuf();
         return CABINET_OK;
     }
 
@@ -112,5 +114,6 @@ int RequestVoteCommand::operator[](Client *client) const {
     client->appendReplyBody(std::to_string(term));
     client->appendReplyBody("voteGranted");
     client->appendReplyBody("true");
+    //client->printSendBuf();
     return CABINET_OK;
 }

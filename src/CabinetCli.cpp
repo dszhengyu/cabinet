@@ -40,7 +40,7 @@ void CabinetCli::printPrompt() {
 }
 
 int CabinetCli::connectServer() {
-    logDebug("cabinet cli connect server");
+    //logDebug("cabinet cli connect server");
     if ((this->connectFd = Util::connectTcp(this->serverIp.c_str(), this->serverPort)) == CABINET_ERR) {
         std::cout << "connect server error" << std::endl;
         exit(1);
@@ -60,7 +60,7 @@ void CabinetCli::reSetServer(const string &newServerIp, const int newServerPort)
  * notice: loop until user input sth
  */
 int CabinetCli::readClientInput() {
-    logDebug("cabinet cli read client input");
+    //logDebug("cabinet cli read client input");
     while (this->clientInput.size() == 0) {
         this->resetAll();
         this->printPrompt();
@@ -71,7 +71,7 @@ int CabinetCli::readClientInput() {
 
 
 int CabinetCli::formatClientInput() {
-    logDebug("cabinet cli format client input");
+    //logDebug("cabinet cli format client input");
     //split the client input into string vector
     while (this->clientInput.length() != 0) {
         size_t blankPosition = this->clientInput.find_first_of(' ');
@@ -139,7 +139,7 @@ int CabinetCli::formatClientInput() {
 }
 
 int CabinetCli::resetAll() {
-    logDebug("cabinet cli reset all");
+    //logDebug("cabinet cli reset all");
     this->clientInput.clear();
     this->clientInputSplited.clear();
     this->protocolStream.clear();
@@ -147,10 +147,10 @@ int CabinetCli::resetAll() {
 }
 
 int CabinetCli::sendClientInput() {
-    logDebug("cabinet cli sending client input");
-    logDebug("cabinet protocol stream send \nbuf[\n%s]\n buf_len[%d]", \
-            this->protocolStream.getSendBuf().c_str(), \
-            this->protocolStream.getSendBufLen());
+    //logDebug("cabinet cli sending client input");
+    //logDebug("cabinet protocol stream send \nbuf[\n%s]\n buf_len[%d]", 
+    //        this->protocolStream.getSendBuf().c_str(), 
+    //        this->protocolStream.getSendBufLen());
     if (this->protocolStream.getSendBufLen() == 0) {
         this->resetAll();
         return CABINET_ERR;
@@ -165,19 +165,19 @@ int CabinetCli::sendClientInput() {
             this->resetAll();
             return CABINET_ERR;
         }
-        logDebug("cabinet cli send [%d] byte", nWrite);
+        //logDebug("cabinet cli send [%d] byte", nWrite);
         this->protocolStream.eraseSendBuf(0, nWrite);
     }
     return CABINET_OK;
 }
 
 int CabinetCli::receiveServerOutput() {
-    logDebug("cabinet cli receiving server output");
+    //logDebug("cabinet cli receiving server output");
     while (!this->protocolStream.isReceiveComplete()) {
         //read from server, fill buf
         char readBuf[this->READ_MAX_LEN];
         int nRead = 0;
-        logDebug("cabinet cli read from server");
+        //logDebug("cabinet cli reading from server");
         nRead = read(this->connectFd, readBuf, this->READ_MAX_LEN);
         if (nRead == -1) {
             std::cout << "Connect to Server Error" << std::endl;
@@ -189,6 +189,7 @@ int CabinetCli::receiveServerOutput() {
             exit(1);
             return CABINET_ERR;
         }
+        readBuf[nRead] = '\0';
         logDebug("cabinet cli receive server output[\n%s] output_len[%d]", readBuf, nRead);
         this->protocolStream.fillReceiveBuf(readBuf, nRead);
 
@@ -201,7 +202,7 @@ int CabinetCli::receiveServerOutput() {
     }
 
     if (this->protocolStream.getCommandName() == "redirect") {
-        logDebug("cabinet cli receive redirect");
+        //logDebug("cabinet cli receive redirect");
         const vector<string> &argv = this->protocolStream.getReceiveArgv();
         const string &newIP = argv[2];
         int newPort;
@@ -217,7 +218,7 @@ int CabinetCli::receiveServerOutput() {
 }
 
 int CabinetCli::displayServerOutput() {
-    logDebug("cabinet cli display server output");
+    //logDebug("cabinet cli display server output");
     for (const string &str : this->protocolStream.getReceiveArgv()) {
         std::cout << str << std::endl; 
     }

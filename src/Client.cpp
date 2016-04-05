@@ -110,9 +110,9 @@ int Client::sendReply() {
         logDebug("local pf client no reply");
         return CABINET_OK; 
     }
-    logDebug("protocol stream send \nbuf[\n%s]\n buf_len[%d]", 
-            this->protocolStream.getSendBuf().c_str(), 
-            this->protocolStream.getSendBufLen());
+    //logDebug("protocol stream send \nbuf[\n%s]\n buf_len[%d]", 
+    //        this->protocolStream.getSendBuf().c_str(), 
+    //        this->protocolStream.getSendBufLen());
     if (this->protocolStream.getSendBufLen() == 0) {
         return CABINET_OK;
     }
@@ -150,6 +150,13 @@ int Client::resetClient() {
     this->protocolStream.clear();
     return CABINET_OK;
  }
+
+void Client::printSendBuf() const {
+    logDebug("print send buf[\n%s]\n buf_len[%d]", 
+            this->protocolStream.getSendBuf().c_str(), 
+            this->protocolStream.getSendBufLen());
+    return;
+}
 
 Client::~Client() {
     close(this->fd);

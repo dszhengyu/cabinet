@@ -182,7 +182,7 @@ int ProtocolStream::resolveReceiveBuf() {
     }
 
     if (this->wrapDefaultCommand) {
-        logDebug("client wrap with default command, command_name[%s]", this->wrapCommandName.c_str());
+        //logDebug("client wrap with default command, command_name[%s]", this->wrapCommandName.c_str());
         this->argv.clear();
         this->argv.push_back(this->wrapCommandName);
         this->argv.push_back(this->curCommandBuf);

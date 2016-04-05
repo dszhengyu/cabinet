@@ -152,6 +152,14 @@ bool Siblings::satisfyWorkingBaseling() {
     return finalVal;
 }
 
+bool Siblings::haveConnectAllSiblings() {
+    bool finalVal = true;
+    for (int clusterId : this->clusterIdVector) {
+        finalVal &= this->connectStatus[clusterId];
+    }
+    return finalVal;
+}
+
 /*
  *brief: only connect lost siblings whose id is smaller than "this"
  *step: 1. get connect
@@ -344,14 +352,15 @@ void Siblings::checkIfEntryCouldCommit(long index) {
         return; 
     }
 
-    int matchTotal = 0;
+    int matchTotal = 1;
     for (int clusterId : this->clusterIdVector) {
         if (this->matchIndexMap[clusterId] >= index) {
             ++matchTotal;
         }
     }
     if (matchTotal < this->clusterHalfNumber()) {
-        logDebug("cluster cluster_id[%d] entry index[%ld] could not commit yet", this->clusterId, index);
+        logDebug("cluster cluster_id[%d] entry index[%ld] could not commit yet, match_total[%d], cluster_half_number[%d]", 
+                this->clusterId, index, matchTotal, this->clusterHalfNumber());
         return;
     }
 

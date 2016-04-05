@@ -17,7 +17,7 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
     Cluster *cluster = clusterClient->getClusterPtr();
     int leaderId = cluster->getClusterId();
     int followerId = clusterClient->getClusterId();
-    logNotice("cluster cluster_id[%d] receive reply append entry from cluster[%d]", leaderId, followerId);
+    //logDebug("cluster cluster_id[%d] receive reply append entry from cluster[%d]", leaderId, followerId);
 
     const vector<string> &argv = clusterClient->getReceiveArgv();
     if (argv.size() != (unsigned int)(this->commandArgc() + 1)) {
@@ -61,7 +61,7 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
 
     //验证append entry结果
     if (result == string("false")) {
-        logDebug("cluster cluster_id[%d] receive cluster[%d] append entry reply[false], decrease next_index", leaderId, followerId);
+        //logDebug("cluster cluster_id[%d] receive cluster[%d] append entry reply[false], decrease next_index", leaderId, followerId);
         long currentNextIndex = siblings->getSiblingNextIndex(followerId);
         if (currentNextIndex == 1) {
             logWarning("cluster cluster_id[%d] can not decrease cluster[%d] next index to 0, program fail", leaderId, followerId);
@@ -71,7 +71,7 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
         return CABINET_OK;
     }
     if (result == string("true")) {
-        logDebug("cluster cluster_id[%d] receive cluster[%d] append entry reply[true]", leaderId, followerId);
+        //logDebug("cluster cluster_id[%d] receive cluster[%d] append entry reply[true]", leaderId, followerId);
         //检验之前append entry 是否是空的
         bool empty;
         if (siblings->getEmptyAppendEntry(followerId, empty) == CABINET_ERR) {
@@ -79,11 +79,11 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
             return CABINET_OK;
         }
         if (empty == true) {
-            logDebug("cluster cluster_id[%d] last append entry cluster[%d] empty[true]", leaderId, followerId);
+            //logDebug("cluster cluster_id[%d] last append entry cluster[%d] empty[true]", leaderId, followerId);
             return CABINET_OK;
         }
         //append 不为空的entry且获得了成功
-        logDebug("cluster cluster_id[%d] last append entry cluster[%d] empty[false]", leaderId, followerId);
+        //logDebug("cluster cluster_id[%d] last append entry cluster[%d] empty[false]", leaderId, followerId);
         long newMatchIndex = siblings->getSiblingNextIndex(followerId);
         siblings->increaseSiblingNextIndex(followerId);
         siblings->setMatchIndex(followerId, newMatchIndex);

@@ -214,7 +214,7 @@ int Cluster::cron() {
 
     //do thing each role should do
     if (this->isLeader()) {
-        logDebug("cluster cluster_id[%d] work as leader, term[%ld]", this->clusterId, this->currentTerm);
+        //logDebug("cluster cluster_id[%d] work as leader, term[%ld]", this->clusterId, this->currentTerm);
         //append entry to sibilings
         vector<ClusterClient *> onlineSiblings = this->siblings->getSiblingsNeedAppendEntry();
         Command &appendEntryCommand = this->commandKeeperPtr->selectCommand("appendentry");
@@ -232,7 +232,7 @@ int Cluster::cron() {
     }
 
     if (this->isFollower()) {
-        logDebug("cluster cluster_id[%d] work as follower, term[%ld]", this->clusterId, this->currentTerm);
+        //logDebug("cluster cluster_id[%d] work as follower, term[%ld]", this->clusterId, this->currentTerm);
         long currentUnixTimeInMs = Util::getCurrentTimeInMs();
         long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
         if (gap > this->electionTimeout) {
@@ -247,7 +247,7 @@ int Cluster::cron() {
     }
 
     if (this->isCandidate()) {
-        logDebug("cluster cluster_id[%d] work as candidate, term[%ld]", this->clusterId, this->currentTerm);
+        //logDebug("cluster cluster_id[%d] work as candidate, term[%ld]", this->clusterId, this->currentTerm);
         long currentUnixTimeInMs = Util::getCurrentTimeInMs();
         long gap = currentUnixTimeInMs - this->lastUnixTimeInMs;
         if (gap > this->electionTimeout) {
@@ -262,7 +262,7 @@ int Cluster::cron() {
             }
 
             //not enough votes
-            logNotice("cluster cluster_id[%d] candidate election timeout, change to candidate", this->clusterId);
+            //logNotice("cluster cluster_id[%d] candidate election timeout, change to candidate", this->clusterId);
             int sleepAWhile = this->electionTimeout / this->clusterId;
             logDebug("cluster cluster_id[%d] candidate election timeout, randomly sleep for a while, [%d]ms",
                     this->clusterId, sleepAWhile);
@@ -305,6 +305,7 @@ int Cluster::toLead() {
     this->siblings->setNextIndexBatch(nextIndex);
     this->siblings->setMatchIndexBatch(0);
     this->siblings->setAlreadyAppendEntryBatch(false);
+    this->parents->clearDealingIndex();
 
     return CABINET_OK;
 }

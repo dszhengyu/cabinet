@@ -12,9 +12,7 @@
 ###2016-4-6-v3.0-almost-done    
 调试结束, 可以进行的些小工作有:    
 1. 不要timewait? 或者关闭的cluster设置一定时间之后才重新连接    
-2. 展示使用的脚本, 功能要有:    
-    a. 启动集群, [可指定主机数量]    
-    b. 关闭任意主机, 并且重新开启任意主机    
+2. value of selection timeout need to be reconsider    
 3. 增加集群状态的显示命令    
 
 ###2016-4-5-v3.0-keep-debugging    

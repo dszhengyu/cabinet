@@ -40,7 +40,7 @@ void Cluster::initConfig() {
         this->electionTimeout = std::stoi(conf["CLUSTER_ELECTION_TIMEOUT_RATIO"]) * (1000 / this->hz);
         int clusterIDMax = std::stoi(conf["CLUSTER_ID_MAX"]);
         int clusterIDMin = std::stoi(conf["CLUSTER_ID_MIN"]);
-        this->winVoteBaseline = (clusterIDMax - clusterIDMin + 1) / 2 + 1;
+        this->winVoteBaseline = ((clusterIDMax - clusterIDMin + 1) / 2) + 1;
         this->pfName = conf["CLUSTER_PF_NAME"] + "." + conf["CLUSTER_ID"];
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());
@@ -98,7 +98,8 @@ void Cluster::init() {
 
     logNotice("init cluster cluster_id[%d] done", this->clusterId);
     #include "CabinetLogo.h"
-    logNotice(cabinet_cluster_logo, this->port, this->pfName.c_str(), this->clusterId, this->hz, this->electionTimeout);
+    logNotice(cabinet_cluster_logo, this->port, this->pfName.c_str(), this->clusterId, this->hz, 
+            this->electionTimeout, this->winVoteBaseline);
 }
 
 Client *Cluster::createClient(int listenFd) {
@@ -184,6 +185,7 @@ int Cluster::cron() {
         }
         if (!this->siblings->satisfyWorkingBaseling()) {
             logDebug("cluster cluster_id[%d] could not meet working baseline, because of sibling", this->clusterId);
+            this->siblings->setLeaderId(-1);
             if (this->siblings->connectLostSiblings() == CABINET_ERR) {
                 logFatal("cluster cluster_id[%d] connect lost siblings error", this->clusterId);
                 exit(1);

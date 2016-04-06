@@ -29,7 +29,7 @@ const char *cabinet_cluster_logo =
 "+________+________+________+    Cluster_id: %d\n"
 "|        |        |        |    Hz: %d\n"   
 "|        |        |        |    ElectionTimeout: %d\n"   
-"|        |        |        |\n"   
+"|        |        |        |    WinVoteBaseline: %d\n"   
 "|     || |     || |     || |\n"   
 "|        |        |        |\n"   
 "|        |        |        |\n"   

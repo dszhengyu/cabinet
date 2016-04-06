@@ -45,6 +45,7 @@ public:
     void voteFor(int candidateId) {this->votedFor = candidateId;}
     void increaseVote() {++this->receiveVotes;}
     bool achieveLeaderBaseline() const {return this->receiveVotes >= this->winVoteBaseline;}
+    int getVoteCount() const {return this->receiveVotes;}
 
     int setNewEntryIndexAndTerm(Entry &newEntry);
     Parents *getParents() const {return this->parents;}

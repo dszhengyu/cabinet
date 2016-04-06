@@ -45,9 +45,10 @@ int ReplyRequestVoteCommand::operator[](Client *client) const {
     }
 
     cluster->increaseVote();
-    logNotice("cluster cluster_id[%d] receive reply request vote from cluster[%d], get a vote", clusterId, voterId);
+    logNotice("cluster cluster_id[%d] receive reply request vote from cluster[%d], get a vote, total[%d]", clusterId, voterId,
+            cluster->getVoteCount());
     if (cluster->achieveLeaderBaseline()) {
-        logNotice("cluster cluster_id[%d] receive enough vote, change to leader", clusterId);
+        logNotice("cluster cluster_id[%d] receive enough vote[%d], change to leader", clusterId, cluster->getVoteCount());
         cluster->toLead();
         return CABINET_OK;
     }

@@ -26,7 +26,7 @@ CommandKeeper::CommandKeeper() :
 
 #ifdef CABINET_CLUSTER
 void CommandKeeper::createClusterCommandMap() {
-    logNotice("create cluster command map");
+    logDebug("create cluster command map");
     commandMap["nomatch"] = new ClusterDefaultCommand();
     commandMap["requestvote"] = new RequestVoteCommand();
     commandMap["replyrequestvote"] = new ReplyRequestVoteCommand();
@@ -40,7 +40,7 @@ void CommandKeeper::createClusterCommandMap() {
 
 #ifndef CABINET_CLUSTER
 void CommandKeeper::createServerCommandMap() {
-    logNotice("create server command map");
+    logDebug("create server command map");
     commandMap["get"] = new GetCommand();
     commandMap["set"] = new SetCommand();
     commandMap["del"] = new DelCommand();
@@ -48,7 +48,7 @@ void CommandKeeper::createServerCommandMap() {
 }
 
 void CommandKeeper::createClientCommandMap() {
-    logNotice("create client command map");
+    logDebug("create client command map");
     commandMap["get"] = new GetCommand();
     commandMap["set"] = new SetCommand();
     commandMap["del"] = new DelCommand();

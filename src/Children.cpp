@@ -62,7 +62,7 @@ int Children::connectLostChildren() {
 
     int connectFd;
     if ((connectFd = Util::connectTcp(this->ip.c_str(), this->port)) == CABINET_ERR) {
-        logWarning("connect child error, ip[%s], port[%d]", this->ip.c_str(), this->port);
+        logDebug("connect child error, ip[%s], port[%d]", this->ip.c_str(), this->port);
         return CABINET_OK;
     }
     

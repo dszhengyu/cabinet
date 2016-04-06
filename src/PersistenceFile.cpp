@@ -11,8 +11,12 @@ PersistenceFile::PersistenceFile(const string &pfName, const string &tmpPFName):
 }
 
 int PersistenceFile::appendToPF(const Entry &entry) {
-    logDebug("append entry to pf[%s]", this->pFName.c_str());
+    logDebug("append entry to pf[%s], index[%ld]", this->pFName.c_str(), entry.getIndex());
     this->pFOut << entry;
+    if(!this->pFOut.good()) {
+        logFatal("append entry to pf[%s] error, index[%ld]", this->pFName.c_str(), entry.getIndex());
+        return CABINET_ERR;
+    }
     return CABINET_OK;
 }
 
@@ -66,13 +70,25 @@ int PersistenceFile::deleteEntryAfter(long index) {
     }
     if (tmpEntry.getIndex() != index) {
         logWarning("delete entry in pf[%s] after index but index not found. index[%ld]", this->pFName.c_str(), index);
+        return CABINET_ERR;
     }
+    tmpStream.close();
+    this->pFOut.close();
+    this->pFIn.close();
 
     remove(this->pFName.c_str());
     rename(this->tmpPFName.c_str(), this->pFName.c_str());
 
     this->pFOut.open(this->pFName, ofstream::app);
     this->pFIn.open(this->pFName);
+    if (!this->pFOut.good()) {
+        logFatal("open pf[%s] to write error", this->pFName.c_str());
+        return CABINET_ERR;
+    }
+    if (!this->pFIn.good()) {
+        logFatal("open pf[%s] to write error", this->pFName.c_str());
+        return CABINET_ERR;
+    }
     return CABINET_OK;
 }
 

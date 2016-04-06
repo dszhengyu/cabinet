@@ -31,7 +31,7 @@ int AppendEntryCommand::operator>>(Client *client) const {
     Siblings *siblings = cluster->getSiblings();
     long nextEntryIndex = siblings->getSiblingNextIndex(clientId);
     if (nextEntryIndex == CABINET_ERR || nextEntryIndex < 1) {
-        logFatal("append entry into invalid sibling with wrong cluster id!");
+        logFatal("cluster cluster_id[%d] append entry into invalid sibling with wrong cluster_id!");
         exit(1);
     }
 
@@ -231,6 +231,7 @@ int AppendEntryCommand::operator[](Client *client) const {
         exit(1);
     }
 
+    //重要: 运行到此, 表示验证成功(追随这个leader)之后, 一切log都要跟此leader一致
     //更改某些状态
     cluster->updateTimeout();
     Siblings *siblings = cluster->getSiblings();
@@ -238,14 +239,15 @@ int AppendEntryCommand::operator[](Client *client) const {
     PersistenceFile *pf = cluster->getPersistenceFile();
 
     //验证prevLog的正确性
-    //  两种情况: 1. prevLogIndex为0, 只需验证本机pf也没有entry即可
+    //  两种情况: 1. prevLogIndex为0, 只需验证本机pf也没有entry即可. 如果有, 全部删除
     //            2. prevLogIndex不为0, 详细验证prevLogIndex以及prevLogTerm
     if (leaderPrevLogIndex == 0) {
         Entry lastEntry;
         if (pf->findLastEntry(lastEntry) != CABINET_ERR) {
-            //logDebug("cluster cluster_id[%d] get prevLogIndex[0] from cluster[%d], but have log in local pf,
-            //        reject append entry from cluster[%d]", 
-            //        followerId, leaderId, leaderId);
+            logDebug("cluster cluster_id[%d] get prevLogIndex[0] from cluster[%d], but have log in local pf,\
+                    reject append entry from cluster[%d], delete all the log in local of",
+                    followerId, leaderId, leaderId);
+            pf->deleteAllEntry();
             client->initReplyHead(5);
             client->appendReplyType(this->commandType());
             client->appendReplyBody("replyappendentry");

@@ -18,6 +18,7 @@ public:
     static int closeConnectFd(int connectFd);
 private:
     static int reuseAddress(int fd);
+    static int connectTcpNoBlock(const char *ip, int port);
 };
 
 #endif

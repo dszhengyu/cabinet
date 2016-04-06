@@ -98,7 +98,7 @@ int Siblings::addSiblings(ClusterClient *sibling) {
 
     this->clusterIdClientPtrMap[clusterId] = sibling;
     this->connectStatus[clusterId] = false;
-    this->nextIndexMap[clusterId] = 0;
+    this->nextIndexMap[clusterId] = this->cluster->getIndex() + 1;
     this->matchIndexMap[clusterId] = 0;
     this->connectTrying[clusterId] = false;
     this->alreadyAppendEntry[clusterId] = false;
@@ -145,11 +145,16 @@ vector<ClusterClient *> Siblings::getSiblingsNeedAppendEntry() {
 }
 
 bool Siblings::satisfyWorkingBaseling() {
-    bool finalVal = true;
+    int siblingAliveNumber = 1;
     for (int clusterId : this->clusterIdVector) {
-        finalVal &= this->connectStatus[clusterId];
+        if(this->connectStatus[clusterId] == true) {
+            ++siblingAliveNumber;
+        }   
     }
-    return finalVal;
+    if (siblingAliveNumber >= this->clusterHalfNumber()) {
+        return true;
+    }
+    return false;
 }
 
 bool Siblings::haveConnectAllSiblings() {
@@ -258,6 +263,7 @@ int Siblings::validateClusterId(int clusterId) {
 }
 
 void Siblings::setNextIndexBatch(long newNextIndex) {
+    logDebug("cluster cluster_id[%d] set next_index[%ld] batch", this->clusterId, newNextIndex);
     for (int clusterId : this->clusterIdVector) {
         this->nextIndexMap[clusterId] = newNextIndex;
     }

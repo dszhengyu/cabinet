@@ -22,6 +22,7 @@ public:
     int findEntry(const long index, Entry &entry);
     int findLastEntry(Entry &entry);
     int deleteEntryAfter(long index);
+    int deleteAllEntry();
 
     int appendToPF(const Entry &entry);
     int getNextPFEntry(Entry &entry);

@@ -203,6 +203,15 @@ int Cluster::cron() {
         return CABINET_OK;
     }
 
+    //check if lost sibling even the baseline is satisfied
+    if (!this->siblings->haveConnectAllSiblings()) {
+        logWarning("cluster cluster_id[%d] meet working baseline, but have not connect all siblings", this->clusterId);
+        if (this->siblings->connectLostSiblings() == CABINET_ERR) {
+            logFatal("cluster cluster_id[%d] connect lost siblings error", this->clusterId);
+            exit(1);
+        }
+    }
+
     //flush command to children
     ClusterClient *children = this->children->getOnlineChildren();
     if (children != nullptr) {
@@ -301,6 +310,7 @@ int Cluster::toLead() {
     Entry lastEntry;
     this->pf->findLastEntry(lastEntry);
     this->lastEntryIndex = lastEntry.getIndex();
+    this->commitIndex = lastEntry.getIndex();
     long nextIndex = this->lastEntryIndex + 1;
     this->siblings->setNextIndexBatch(nextIndex);
     this->siblings->setMatchIndexBatch(0);

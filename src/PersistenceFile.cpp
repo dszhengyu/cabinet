@@ -76,6 +76,15 @@ int PersistenceFile::deleteEntryAfter(long index) {
     return CABINET_OK;
 }
 
+int PersistenceFile::deleteAllEntry() {
+    this->pFOut.close();
+    this->pFIn.close();
+    remove(this->pFName.c_str());
+    this->pFOut.open(this->pFName, ofstream::app);
+    this->pFIn.open(this->pFName);
+    return CABINET_OK;
+}
+
 int PersistenceFile::getNextPFEntry(Entry &entry) {
     //logDebug("get next pf[%s] entry", this->pFName.c_str());
     this->pFIn >> entry;

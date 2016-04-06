@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <sys/time.h>
+#include <sys/select.h>
 
 string Util::getCurrentTime() {
     time_t timer = 0;
@@ -110,6 +111,7 @@ int Util::acceptTcp(const int listenfd, string &strIP, int &port) {
 
 int Util::connectTcp(const char *ip, int port) {
     //logDebug("connect tcp, IP[%s], port[%d]", ip, port);
+    return Util::connectTcpNoBlock(ip, port);
     int connectFd;
     struct sockaddr_in clientAddr;
     
@@ -133,6 +135,76 @@ int Util::connectTcp(const char *ip, int port) {
     logNotice("connect tcp success, IP[%s], port[%d], fd[%d]", ip, port, connectFd);
     return connectFd;
 }
+
+int Util::connectTcpNoBlock(const char *ip, int port) {
+    logDebug("connect no-block tcp, IP[%s], port[%d]", ip, port);
+    int connectFd;
+    struct sockaddr_in clientAddr;
+    
+    if ((connectFd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        logWarning("Create Socket Error");
+        return CABINET_ERR;
+    }
+
+    bzero(&clientAddr, sizeof(clientAddr));
+    clientAddr.sin_family = AF_INET;
+    clientAddr.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip, &clientAddr.sin_addr) <= 0) {
+        logWarning("Create Client Address Error");
+        return CABINET_ERR;
+    }
+
+    int flags;
+    flags = fcntl(connectFd, F_GETFL, 0);  
+    fcntl(connectFd, F_SETFL, flags | O_NONBLOCK);  
+
+    int n;
+    if ((n = connect(connectFd, (struct sockaddr *)&clientAddr, sizeof(clientAddr)) < 0)) {
+        goto done;  
+    } 
+    else if (n < 0 && errno != EINPROGRESS) {
+        logWarning("connect error");
+        return CABINET_ERR;
+    }  
+
+    fd_set wset;  
+    FD_ZERO(&wset);  
+    FD_SET(connectFd, &wset);  
+    struct timeval tval;  
+    tval.tv_sec = 1;
+    tval.tv_usec = 0;  
+
+    if ((n = select(connectFd + 1, NULL, &wset, NULL, &tval)) == 0) {  
+        close(connectFd);
+        errno = ETIMEDOUT;  
+        logWarning("select timeout");
+        return CABINET_ERR;
+    }  
+
+    if (FD_ISSET(connectFd, &wset)) {  
+        int error = 0;  
+        int code;
+        socklen_t len = sizeof(error);  
+        code = getsockopt(connectFd, SOL_SOCKET, SO_ERROR, &error, &len);  
+        if (code < 0 || error) {  
+            close(connectFd);  
+            if (error) {
+                errno = error;  
+            }
+            logWarning("connect fail");
+            return CABINET_ERR;
+        }  
+    } 
+    else {  
+        logWarning("select error");
+        return CABINET_ERR;
+    }  
+
+done:  
+    fcntl(connectFd, F_SETFL, flags);
+    logNotice("connect tcp success, IP[%s], port[%d], fd[%d]", ip, port, connectFd);
+    return connectFd;
+}  
 
 int Util::daemonize() {
     int pid1 = -1;

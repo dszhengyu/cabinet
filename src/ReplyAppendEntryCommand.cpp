@@ -63,11 +63,9 @@ int ReplyAppendEntryCommand::operator[](Client *client) const {
     if (result == string("false")) {
         //logDebug("cluster cluster_id[%d] receive cluster[%d] append entry reply[false], decrease next_index", leaderId, followerId);
         long currentNextIndex = siblings->getSiblingNextIndex(followerId);
-        if (currentNextIndex == 1) {
-            logWarning("cluster cluster_id[%d] can not decrease cluster[%d] next index to 0, program fail", leaderId, followerId);
-            return CABINET_OK;
+        if (currentNextIndex > 1) {
+            siblings->decreaseSiblingNextIndex(followerId);
         }
-        siblings->decreaseSiblingNextIndex(followerId);
         return CABINET_OK;
     }
     if (result == string("true")) {

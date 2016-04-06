@@ -35,7 +35,7 @@ int Client::fillReceiveBuf() {
         }
     }   
     else if (nRead == 0) {
-        logNotice("client client_id[%d] close connection", this->getClientId());
+        logDebug("client client_id[%d] close connection", this->getClientId());
         return CABINET_ERR;
     }
 

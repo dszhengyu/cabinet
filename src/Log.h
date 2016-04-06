@@ -3,7 +3,7 @@
 
 #include <cstdarg>
 
-static const bool printDebug = true;
+static const bool printDebug = false;
 
 #define logFatal(format, arg...) Log::fatal(__FILE__, __LINE__, format, ##arg)
 #define logWarning(format, arg...) Log::warning(__FILE__, __LINE__, format, ##arg)

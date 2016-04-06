@@ -42,8 +42,10 @@ int ClusterDefaultCommand::operator[](Client *client) const {
         string leaderIP;
         int leaderPort;
         if (siblings->getLeaderIPAndPort(leaderIP, leaderPort) == CABINET_ERR) {
-            logWarning("follower get leader ip and port error");
-            return CABINET_ERR;
+            logDebug("cluster could not use currently");
+            client->initReplyHead(1);
+            client->appendReplyBody("cluster is not available now");
+            return CABINET_OK;
         }
         client->initReplyHead(5);
         client->appendReplyBody("redirect");

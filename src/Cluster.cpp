@@ -177,20 +177,21 @@ int Cluster::cron() {
     this->meetWorkingBaseline = this->siblings->satisfyWorkingBaseling() && this->children->satisfyWorkingBaseling();
     //reconnect if baseline not achieved
     if (!this->meetWorkingBaseline) {
-        logWarning("cluster cluster_id[%d] could not meet working baseline", this->clusterId);
+        logDebug("cluster cluster_id[%d] could not meet working baseline", this->clusterId);
         if (!this->isFollower() && this->toFollow(this->currentTerm) == CABINET_ERR) {
             logFatal("cluster cluster_id[%d] change to follower error", this->clusterId);
             exit(1);
         }
         if (!this->siblings->satisfyWorkingBaseling()) {
-            logWarning("cluster cluster_id[%d] could not meet working baseline, because of sibling", this->clusterId);
+            logDebug("cluster cluster_id[%d] could not meet working baseline, because of sibling", this->clusterId);
             if (this->siblings->connectLostSiblings() == CABINET_ERR) {
                 logFatal("cluster cluster_id[%d] connect lost siblings error", this->clusterId);
                 exit(1);
             }
         }
         if (!this->children->satisfyWorkingBaseling()) {
-            logWarning("cluster cluster_id[%d] could not meet working baseline, because of children", this->clusterId);
+            logDebug("cluster cluster_id[%d] could not meet working baseline, because of children", this->clusterId);
+            this->lastApplied = 0;
             if (this->children->connectLostChildren() == CABINET_ERR) {
                 logFatal("cluster cluster_id[%d] connect lost children error", this->clusterId);
                 exit(1);
@@ -205,7 +206,7 @@ int Cluster::cron() {
 
     //check if lost sibling even the baseline is satisfied
     if (!this->siblings->haveConnectAllSiblings()) {
-        logWarning("cluster cluster_id[%d] meet working baseline, but have not connect all siblings", this->clusterId);
+        logDebug("cluster cluster_id[%d] meet working baseline, but have not connect all siblings", this->clusterId);
         if (this->siblings->connectLostSiblings() == CABINET_ERR) {
             logFatal("cluster cluster_id[%d] connect lost siblings error", this->clusterId);
             exit(1);

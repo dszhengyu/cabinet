@@ -112,6 +112,7 @@ int Util::acceptTcp(const int listenfd, string &strIP, int &port) {
 int Util::connectTcp(const char *ip, int port) {
     //logDebug("connect tcp, IP[%s], port[%d]", ip, port);
     return Util::connectTcpNoBlock(ip, port);
+
     int connectFd;
     struct sockaddr_in clientAddr;
     
@@ -142,7 +143,7 @@ int Util::connectTcpNoBlock(const char *ip, int port) {
     struct sockaddr_in clientAddr;
     
     if ((connectFd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        logWarning("Create Socket Error");
+        logWarning("create socket error, IP[%s], port[%d]", ip, port);
         return CABINET_ERR;
     }
 
@@ -150,7 +151,7 @@ int Util::connectTcpNoBlock(const char *ip, int port) {
     clientAddr.sin_family = AF_INET;
     clientAddr.sin_port = htons(port);
     if (inet_pton(AF_INET, ip, &clientAddr.sin_addr) <= 0) {
-        logWarning("Create Client Address Error");
+        logWarning("create client address error  error, IP[%s], port[%d]", ip, port);
         return CABINET_ERR;
     }
 
@@ -163,7 +164,7 @@ int Util::connectTcpNoBlock(const char *ip, int port) {
         goto done;  
     } 
     else if (n < 0 && errno != EINPROGRESS) {
-        logWarning("connect error");
+        logWarning("connect error  error, IP[%s], port[%d]", ip, port);
         return CABINET_ERR;
     }  
 
@@ -177,7 +178,7 @@ int Util::connectTcpNoBlock(const char *ip, int port) {
     if ((n = select(connectFd + 1, NULL, &wset, NULL, &tval)) == 0) {  
         close(connectFd);
         errno = ETIMEDOUT;  
-        logWarning("select timeout");
+        logWarning("select timeout error, IP[%s], port[%d]", ip, port);
         return CABINET_ERR;
     }  
 
@@ -191,18 +192,18 @@ int Util::connectTcpNoBlock(const char *ip, int port) {
             if (error) {
                 errno = error;  
             }
-            logWarning("connect fail");
+            logWarning("connect fail, IP[%s], port[%d]", ip, port);
             return CABINET_ERR;
         }  
     } 
     else {  
-        logWarning("select error");
+        logWarning("select error, IP[%s], port[%d]", ip, port);
         return CABINET_ERR;
     }  
 
 done:  
     fcntl(connectFd, F_SETFL, flags);
-    logNotice("connect tcp success, IP[%s], port[%d], fd[%d]", ip, port, connectFd);
+    logDebug("connect tcp success, IP[%s], port[%d], fd[%d]", ip, port, connectFd);
     return connectFd;
 }  
 
@@ -237,7 +238,7 @@ int Util::daemonize() {
             close(fd);
         }
     }
-    logNotice("daemonize done. pid[%d]", getpid());
+    logDebug("daemonize done. pid[%d]", getpid());
     return CABINET_OK;
 }
 

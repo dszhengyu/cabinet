@@ -129,6 +129,10 @@ int Siblings::deleteSiblings(ClusterClient *sibling) {
     this->connectTrying[clusterId] = false;
     this->alreadyAppendEntry[clusterId] = false;
 
+    if (clusterId == this->getLeaderId()) {
+        this->setLeaderId(-1);
+    }
+
     return CABINET_OK;
 }
 
@@ -284,6 +288,9 @@ void Siblings::setMatchIndex(int clusterId, long newMatchIndex) {
 }
 
 int Siblings::getLeaderIPAndPort(string &ip, int &port) {
+    if (this->currentLeaderId == -1) {
+        return CABINET_ERR;
+    }
     ip = this->ipMap[this->currentLeaderId];
     port = this->portMap[this->currentLeaderId];
     return CABINET_OK;

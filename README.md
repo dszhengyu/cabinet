@@ -8,6 +8,15 @@
 
 项目的需求及迭代步骤 请见 [需求文档](https://github.com/dszhengyu/cabinet/blob/master/%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3.md)    
 项目的设计图 [请点我](https://www.processon.com/diagrams) (未分享)    
+
+###2016-4-6-v3.0-almost-done    
+调试结束, 可以进行的些小工作有:    
+1. 不要timewait? 或者关闭的cluster设置一定时间之后才重新连接    
+2. 展示使用的脚本, 功能要有:    
+    a. 启动集群, [可指定主机数量]    
+    b. 关闭任意主机, 并且重新开启任意主机    
+3. 增加集群状态的显示命令    
+
 ###2016-4-5-v3.0-keep-debugging    
 大部分调试结束    
 小瑕疵待修:    

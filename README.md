@@ -9,6 +9,12 @@
 项目的需求及迭代步骤 请见 [需求文档](https://github.com/dszhengyu/cabinet/blob/master/%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3.md)    
 项目的设计图 [请点我](https://www.processon.com/diagrams) (未分享)    
 
+###2016-4-12-v4.0-just-start    
+目前来看, 工作量有:    
+1. 配置文件, 启动脚本改写--done    
+2. children 容下更多主机, 相关数据结构    
+3. 选择server, 一致性哈兮    
+
 ###2016-4-6-v3.0-almost-done    
 调试结束, 可以进行的些小工作有:    
 1. 不要timewait? 或者关闭的cluster设置一定时间之后才重新连接    

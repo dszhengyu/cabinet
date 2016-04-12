@@ -14,9 +14,12 @@ Children::Children(Cluster *cluster):
 int Children::recognizeChildren(Configuration &conf) {
     logNotice("recognizing children");
     try{
-        this->ip = conf["CLUSTER_SERVER_IP"];
-        this->port = std::stoi(conf["CLUSTER_SERVER_PORT"]);
-        logNotice("get child IP[%s], port[%d]", this->ip.c_str(), this->port);
+        int childrenTotal = std::stoi(conf["CLUSTER_SERVER_TOTAL"]);
+        for (int id = 1; id <= childrenTotal; ++id) {
+            this->ip = conf[string("CLUSTER_SERVER_IP_") + std::to_string(id)];
+            this->port = std::stoi(conf[string("CLUSTER_SERVER_PORT_") + std::to_string(id)]);
+            logNotice("cluster cluter_id[%d] get child IP[%s], port[%d]", this->cluster->getClusterId(), this->ip.c_str(), this->port);
+        }
     } catch (std::exception &e) {
         logFatal("children read conf fail, receive exception, what[%s]", e.what());
         return CABINET_ERR;

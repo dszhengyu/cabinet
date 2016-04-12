@@ -21,7 +21,6 @@ public :
     ~Server();
 
 private:
-    long serverId;
     DataBase *db;
     string pfName;
     string allowPF;

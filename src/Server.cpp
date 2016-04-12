@@ -10,7 +10,6 @@
 
 Server::Server() :
     Cabinet(),
-    serverId(-1),
     db(nullptr),
     pfName()
 {
@@ -24,9 +23,8 @@ void Server::initConfig() {
         exit(1);
     }
     try{
-        this->serverId = std::stoi(conf["SERVER_ID"]);
         this->port = std::stoi(conf["SERVER_PORT"]);;
-        this->pfName = conf["SERVER_PF_NAME"] + "." + conf["SERVER_ID"];
+        this->pfName = conf["SERVER_PF_NAME"] + "." + conf["SERVER_PORT"];
         this->allowPF = conf["SERVER_PF"];
     } catch (std::exception &e) {
         logFatal("read conf fail, receive exception, what[%s]", e.what());

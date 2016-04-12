@@ -1,13 +1,16 @@
 #include "Children.h"
 #include "Const.h"
 #include "Util.h"
+#include <utility>
+#include <algorithm>
 
 Children::Children(Cluster *cluster):
     cluster(cluster),
-    child(nullptr),
-    connectStatus(false),
-    ip(),
-    port(-1)
+    serverIdVector(),
+    childPtrMap(),
+    connectStatus(),
+    ipMap(),
+    portMap()
 {
 }
 
@@ -16,9 +19,13 @@ int Children::recognizeChildren(Configuration &conf) {
     try{
         int childrenTotal = std::stoi(conf["CLUSTER_SERVER_TOTAL"]);
         for (int id = 1; id <= childrenTotal; ++id) {
-            this->ip = conf[string("CLUSTER_SERVER_IP_") + std::to_string(id)];
-            this->port = std::stoi(conf[string("CLUSTER_SERVER_PORT_") + std::to_string(id)]);
-            logNotice("cluster cluter_id[%d] get child IP[%s], port[%d]", this->cluster->getClusterId(), this->ip.c_str(), this->port);
+            this->serverIdVector.push_back(id);
+            this->childPtrMap[id] = nullptr;
+            this->connectStatus[id] = false;
+            this->ipMap[id] = conf[string("CLUSTER_SERVER_IP_") + std::to_string(id)];
+            this->portMap[id] = std::stoi(conf[string("CLUSTER_SERVER_PORT_") + std::to_string(id)]);
+            logNotice("cluster cluter_id[%d] get child IP[%s], port[%d]", this->cluster->getClusterId(), 
+                    this->ipMap[id].c_str(), this->portMap[id]);
         }
     } catch (std::exception &e) {
         logFatal("children read conf fail, receive exception, what[%s]", e.what());
@@ -28,31 +35,41 @@ int Children::recognizeChildren(Configuration &conf) {
     return CABINET_OK;
 }
 
-int Children::addChildren(ClusterClient *child) {
-    if (this->child != nullptr) {
-        logWarning("add child while child already exist");
+int Children::addChildren(int id, ClusterClient *child) {
+    if (std::find(this->serverIdVector.begin(), this->serverIdVector.end(), id) == this->serverIdVector.end()) {
+        logWarning("cluster[%d] add child but child not exist", this->cluster->getClusterId());
         return CABINET_ERR;
     }
-    this->child = child;
-    this->connectStatus = true;
+    if (this->childPtrMap[id] != nullptr) {
+        logWarning("cluster[%d] add child while child already exist", this->cluster->getClusterId());
+        return CABINET_ERR;
+    }
+    this->childPtrMap[id] = child;
+    this->connectStatus[id] = true;
     return CABINET_OK;
 }
 
 int Children::deleteChildren(ClusterClient *child) {
-    if (this->child != child) {
+    int id = this->getChildrenId(child);
+    if (id == CABINET_ERR) {
         logWarning("delete child, but child not exist");
         return CABINET_ERR;
     }
-    this->child = nullptr;
-    this->connectStatus = false;
+    if (this->childPtrMap[id] != child) {
+        logWarning("delete child, but child not exist");
+        return CABINET_ERR;
+    }
+    this->childPtrMap[id] = nullptr;
+    this->connectStatus[id] = false;
     return CABINET_OK;
 }
 
-bool Children::satisfyWorkingBaseling() const {
-    if (this->connectStatus == true) {
-        return true;
+bool Children::satisfyWorkingBaseling() {
+    bool result = true;
+    for (int id : this->serverIdVector) {
+        result &= this->connectStatus[id];
     }
-    return false;
+    return result;
 }
 
 int Children::connectLostChildren() {
@@ -63,40 +80,59 @@ int Children::connectLostChildren() {
         return CABINET_OK;
     }
 
-    int connectFd;
-    if ((connectFd = Util::connectTcp(this->ip.c_str(), this->port)) == CABINET_ERR) {
-        logDebug("connect child error, ip[%s], port[%d]", this->ip.c_str(), this->port);
-        return CABINET_OK;
+    for (int id : this->serverIdVector) {
+        if (this->connectStatus[id] == true) {
+            logDebug("cluster cluster_id[%d] already connect No.%d children", clusterId, id);
+            continue;
+        }
+        logDebug("cluster cluster_id[%d] has not connect No.%d children", clusterId, id);
+        int connectFd;
+        if ((connectFd = Util::connectTcp(this->ipMap[id].c_str(), this->portMap[id])) == CABINET_ERR) {
+            logDebug("connect child error, ip[%s], port[%d]", this->ipMap[id].c_str(), this->portMap[id]);
+            return CABINET_OK;
+        }
+        
+        //connect success
+        ClusterClient *newChild = this->cluster->createNormalClient(connectFd, this->ipMap[id], this->portMap[id]);
+        newChild->useWrapProtocolStream();
+        newChild->setCategory(Client::SERVER_CLIENT);
+        EventPoll *eventpoll = this->cluster->getEventPoll();
+        if (eventpoll->createFileEvent(newChild, READ_EVENT) == CABINET_ERR) {
+            logWarning("add child into event poll error");
+            delete newChild;
+            return CABINET_OK;
+        }
+        if (this->addChildren(id, newChild) == CABINET_ERR) {
+            logWarning("add child into children error");
+            delete newChild;
+            return CABINET_OK;
+        }
+        logNotice("cluster cluster_id[%d] connect No.%d lost children success", clusterId, id);
     }
-    
-    //connect success
-    ClusterClient *newChild = this->cluster->createNormalClient(connectFd, this->ip, this->port);
-    newChild->useWrapProtocolStream();
-    newChild->setCategory(Client::SERVER_CLIENT);
-    EventPoll *eventpoll = this->cluster->getEventPoll();
-    if (eventpoll->createFileEvent(newChild, READ_EVENT) == CABINET_ERR) {
-        logWarning("add child into event poll error");
-        delete newChild;
-        return CABINET_OK;
-    }
-    if (this->addChildren(newChild) == CABINET_ERR) {
-        logWarning("add child into children error");
-        delete newChild;
-        return CABINET_OK;
-    }
-    logDebug("cluster cluster_id[%d] connect lost children success", clusterId);
     return CABINET_OK;
 }
 
-ClusterClient *Children::getOnlineChildren() const {
-    if (this->connectStatus == true) {
-        return this->child;
-    }
-    return nullptr;
+int Children::flushServer() {
+    logNotice("cluster cluter_id[%d] flush server", this->cluster->getClusterId());
+    return CABINET_OK;
 }
 
 int Children::shutDown() {
-    int connectFd = this->child->getClientFd();
-    Util::closeConnectFd(connectFd);
+    for (int id : this->serverIdVector) {
+        if (this->connectStatus[id] == false) {
+            continue;
+        }
+        int connectFd = this->childPtrMap[id]->getClientFd();
+        Util::closeConnectFd(connectFd);
+    }
     return CABINET_OK;
+}
+
+int Children::getChildrenId(ClusterClient *child) {
+    for (std::pair<int, ClusterClient *> childIter : this->childPtrMap) {
+        if (childIter.second == child) {
+            return childIter.first;
+        }
+    }
+    return CABINET_ERR;
 }

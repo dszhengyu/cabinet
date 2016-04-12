@@ -216,12 +216,8 @@ int Cluster::cron() {
     }
 
     //flush command to children
-    ClusterClient *children = this->children->getOnlineChildren();
-    if (children != nullptr) {
-        Command &flushServerCommand = this->commandKeeperPtr->selectCommand("flushserver");
-        if ((flushServerCommand >> children) == CABINET_ERR) {
-            logWarning("cluster cluster_id[%d] flush server error", this->clusterId);
-        }
+    if (this->children->flushServer() == CABINET_ERR) {
+        logWarning("cluster cluster_id[%d] flush server error", this->clusterId);
     }
 
     //do thing each role should do

@@ -27,7 +27,7 @@ function startClusterNode() {
     cluster_server_ip_conf="CLUSTER_SERVER_IP-${id}"
     cluster_server_port_conf="CLUSTER_SERVER_PORT-${id}"
     cluster_server_ip=`grep $cluster_server_ip_conf $template_file | awk -F '=' '{print $2}'`
-    cluster_server_port=`grep $cluster_server_port_conf $template_file | awk -F '=' '{print $2}'`
+    cluster_server_port=($(grep $cluster_server_port_conf $template_file | awk -F '=' '{printf("%d ", $2)}'))
     server_total=0
     server_id=1
     for server_ip in ${cluster_server_ip}
@@ -38,7 +38,8 @@ function startClusterNode() {
         sed "s/CLUSTER_SERVER_PORT_${server_id}_PLACEHOLDER/${server_port}/g" -i $conf_file
 
 #modify server conf for server self
-        sed "s/SERVER_PORT_PLACEHOLDER/${server_port}/g" -i $conf_file
+        lineNo=`grep ^SERVER_PORT $conf_file -n | awk -F : '{print $1}'`
+        sed "${lineNo}c SERVER_PORT=${server_port}" -i $conf_file
 
 #echo message, launch server
         echo "  Server_IP_${server_id}: $server_ip"
@@ -79,10 +80,10 @@ function stopClusterNode() {
         do
             echo "  server_pid=${pid}"
             echo "  server_port=${server_port}"
-            echo ""
             kill -KILL $pid
         done
     done
+    echo ""
 }
 
 function startAllClusterNode() {

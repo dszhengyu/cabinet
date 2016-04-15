@@ -9,6 +9,11 @@
 项目的需求及迭代步骤 请见 [需求文档](https://github.com/dszhengyu/cabinet/blob/master/%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3.md)    
 项目的设计图 [请点我](https://www.processon.com/diagrams) (未分享)    
 
+###2016-4-15-v4.0-done    
+命令行上的做完啦    
+毕业旅行去了, 回来再看看要不要做前端的管理界面    
+
+
 ###2016-4-12-v4.0-just-start    
 目前来看, 工作量有:    
 1. 配置文件, 启动脚本改写--done    

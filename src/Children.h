@@ -25,12 +25,15 @@ public:
 private:
     int addChildren(int id, ClusterClient *child);
     int getChildrenId(ClusterClient *child);
+    ClusterClient *getRespondServer(const string &content);
     Cluster *cluster;
     vector<int> serverIdVector;
     map<int, ClusterClient *>childPtrMap;
     map<int, bool> connectStatus;
     map<int, string> ipMap;
     map<int, int> portMap;
+    map<long, int> consistentHashAndServerIdMap;
+    int hashValueMax;
 };
 #endif
 

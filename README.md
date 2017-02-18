@@ -4,7 +4,7 @@ There are three main role
 1. server, basic nosql database, set value and get value    
 2. cluster, component which use raft consensus to achieve high availability and data consensus    
 3. client, use to connect cluster or server    
-For more detail, please glance [My Paper](/基于Raft协议的分布式Nosql数据库集群实现.pdf)
+For more detail, please glance [My Paper](/raw/master/基于Raft协议的分布式Nosql数据库集群实现.pdf)
 
 ##How to use
 ###Compile
